@@ -2,3 +2,9 @@ id,hp,speed,reward,damage,color,radius
 normal,15,1.5,5,1,#ef4444,10
 fast,30,3,3,1,#f97316,8
 tank,60,0.8,15,5,#a855f7,15
+medium,20,2,7,2,#fbbf24,11
+heavy,40,1.2,10,3,#3b82f6,13
+swarm,10,4,2,1,#10b981,7
+boss1,150,1,50,10,#dc2626,18
+boss2,200,0.9,75,15,#7c3aed,20
+boss3,300,0.7,100,20,#000000,22
