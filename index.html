@@ -107,7 +107,9 @@
 
         async function loadCSV(filename) {
             try {
-                const response = await fetch(filename);
+                // Add cache-busting parameter to ensure fresh data
+                const cacheBuster = `?v=${Date.now()}`;
+                const response = await fetch(filename + cacheBuster);
                 if (!response.ok) {
                     throw new Error(`Failed to load ${filename}: ${response.status} ${response.statusText}`);
                 }
@@ -296,9 +298,13 @@
                     
                     // Extract path (everything after the 5th comma)
                     const pathString = line.substring(pathStartIndex);
+                    const parsedPath = parsePath(pathString);
+                    
+                    console.log(`Level ${level} path string:`, pathString);
+                    console.log(`Level ${level} parsed path:`, parsedPath);
                     
                     levels.push({
-                        path: parsePath(pathString),
+                        path: parsedPath,
                         startingMoney: startingMoney,
                         startingLives: startingLives,
                         difficulty: difficulty,
