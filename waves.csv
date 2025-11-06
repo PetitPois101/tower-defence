@@ -1,0 +1,17 @@
+level,wave,enemies
+1,1,normal:10:60
+1,2,normal:15:50
+1,3,normal:20:40
+1,4,normal:10:60+fast:5:120:300
+1,5,normal:15:50+fast:10:120:250
+1,6,normal:20:40+fast:10:120:250
+1,7,normal:25:40+fast:15:90:250
+1,8,normal:30:20+fast:15:90:250
+1,9,normal:30:20+fast:15:50:100
+1,10,normal:25:40+fast:15:90:250+tank:1:50:500
+2,1,normal:20:45+fast:10:90
+2,2,tank:3:180+normal:15:40:60
+2,3,tank:5:200+fast:20:60:300
+3,1,fast:30:30
+3,2,tank:10:100
+3,3,tank:8:120+fast:20:60:200+normal:50:20:400
