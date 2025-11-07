@@ -58,6 +58,9 @@
         let messageBox, messageTitle, messageText, messageButton1, messageButton2;
         // --- NEW UPGRADE UI ELEMENTS ---
         let turretMenu, turretMenuTitle, turretMenuStats, turretMenuUpgrade, turretMenuSell, turretMenuClose;
+        
+        // --- DEBUG MENU ELEMENTS ---
+        let debugMenu, debugClose, debugAddGems, debugAddMoney, debugUnlockAll, debugMaxAll, debugAddLives;
 
         let canvasWidth, canvasHeight;
 
@@ -527,6 +530,34 @@
             }
         }
         
+        // === DEBUG MENU FUNCTIONS ===
+        
+        function toggleDebugMenu() {
+            if (debugMenu) {
+                debugMenu.classList.toggle('hidden');
+            }
+        }
+        
+        function unlockAllTurrets() {
+            Object.keys(turretTypes).forEach(id => {
+                if ((playerData.turretMaxLevels[id] || 0) === 0) {
+                    playerData.turretMaxLevels[id] = 1; // Unlock at level 1
+                }
+            });
+            updateMenuUI();
+            if (gameContainer.style.display !== 'none') {
+                setupTurretButtons(); // Update turret buttons in-game
+            }
+        }
+        
+        function maxAllTurretLevels() {
+            Object.keys(turretTypes).forEach(id => {
+                // Set to max level (4, since gemUpgradeCost has 3 values for levels 2, 3, 4)
+                playerData.turretMaxLevels[id] = 4;
+            });
+            updateMenuUI();
+        }
+        
         // === CORE GAME LOGIC ===
 
         function startGame(levelIndex) {
@@ -603,6 +634,33 @@
             turretMenuClose.addEventListener('click', closeTurretMenu);
             turretMenuUpgrade.addEventListener('click', upgradeSelectedTurret);
             turretMenuSell.addEventListener('click', sellSelectedTurret);
+            
+            // --- Debug Menu Elements ---
+            debugMenu = document.getElementById('debug-menu');
+            debugClose = document.getElementById('debug-close');
+            debugAddGems = document.getElementById('debug-add-gems');
+            debugAddMoney = document.getElementById('debug-add-money');
+            debugUnlockAll = document.getElementById('debug-unlock-all');
+            debugMaxAll = document.getElementById('debug-max-all');
+            debugAddLives = document.getElementById('debug-add-lives');
+            
+            // --- Debug Menu Listeners ---
+            debugClose.addEventListener('click', toggleDebugMenu);
+            debugAddGems.addEventListener('click', () => { playerData.gems += 100; updateMenuUI(); });
+            debugAddMoney.addEventListener('click', () => { money += 1000; updateInGameUI(); });
+            debugUnlockAll.addEventListener('click', unlockAllTurrets);
+            debugMaxAll.addEventListener('click', maxAllTurretLevels);
+            debugAddLives.addEventListener('click', () => { lives += 10; updateInGameUI(); });
+            
+            // --- Keyboard shortcut for debug menu (Press 'D') ---
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'd' || e.key === 'D') {
+                    // Don't trigger if typing in an input field
+                    if (e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                        toggleDebugMenu();
+                    }
+                }
+            });
             
             // Load game data from CSV files
             loadingOverlay.style.display = 'flex';
@@ -1365,6 +1423,22 @@
                 <button id="message-button-1" class="game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">Restart</button>
                 <button id="message-button-2" class="game-button bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Main Menu</button>
             </div>
+        </div>
+    </div>
+
+    <!-- Debug Menu (Press 'D' to toggle) -->
+    <div id="debug-menu" class="hidden fixed top-4 right-4 bg-yellow-900 bg-opacity-95 border-2 border-yellow-500 rounded-lg shadow-2xl p-4 z-50 min-w-[250px]">
+        <div class="flex justify-between items-center mb-3">
+            <h3 class="text-lg font-bold text-yellow-200">Debug Menu</h3>
+            <button id="debug-close" class="text-yellow-200 hover:text-white font-bold text-xl">&times;</button>
+        </div>
+        <div class="space-y-2 text-sm">
+            <div class="text-yellow-300 mb-2">Press 'D' to toggle</div>
+            <button id="debug-add-gems" class="w-full game-button bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">+100 Gems</button>
+            <button id="debug-add-money" class="w-full game-button bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">+1000 Money</button>
+            <button id="debug-unlock-all" class="w-full game-button bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Unlock All Turrets</button>
+            <button id="debug-max-all" class="w-full game-button bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">Max All Turret Levels</button>
+            <button id="debug-add-lives" class="w-full game-button bg-yellow-600 hover:bg-yellow-700 text-white font-bold py-2 px-4 rounded">+10 Lives</button>
         </div>
     </div>
 
