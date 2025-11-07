@@ -240,9 +240,15 @@
                     
                     const id = row.id.toLowerCase();
                     // Find indices: gemUpgradeCost is at index of 'inGameUpgradeCost' header (11)
-                    // inGameUpgradeCost is at index 13 (after empty column at 12)
+                    // inGameUpgradeCost is at index 12 (right after the 'inGameUpgradeCost' header column)
                     const gemUpgradeCostIndex = headers.indexOf('inGameUpgradeCost'); // Should be 11
-                    const inGameUpgradeCostIndex = gemUpgradeCostIndex + 2; // Skip empty column at 12
+                    const inGameUpgradeCostIndex = gemUpgradeCostIndex + 1; // Next column after gemUpgradeCost
+                    
+                    const gemUpgradeCostArray = parseArray(rowValues[gemUpgradeCostIndex] || '');
+                    const inGameUpgradeCostArray = parseArray(rowValues[inGameUpgradeCostIndex] || '');
+                    
+                    console.log(`Turret ${id}: gemUpgradeCost=${rowValues[gemUpgradeCostIndex]}, inGameUpgradeCost=${rowValues[inGameUpgradeCostIndex]}`);
+                    console.log(`Turret ${id}: parsed gemUpgradeCost=`, gemUpgradeCostArray, `inGameUpgradeCost=`, inGameUpgradeCostArray);
                     
                     turretTypes[id] = {
                         name: row.name,
@@ -255,8 +261,8 @@
                         color: row.color,
                         description: row.description,
                         gemUnlockCost: parseFloat(row.gemUnlockCost) || 0,
-                        gemUpgradeCost: parseArray(rowValues[gemUpgradeCostIndex] || ''),
-                        inGameUpgradeCost: parseArray(rowValues[inGameUpgradeCostIndex] || ''),
+                        gemUpgradeCost: gemUpgradeCostArray,
+                        inGameUpgradeCost: inGameUpgradeCostArray,
                         statUpgrades: {
                             damage: parseFloat(row.damageUpgrade) || 0,
                             range: parseFloat(row.rangeUpgrade) || 0,
