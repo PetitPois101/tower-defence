@@ -28,6 +28,15 @@
             box-shadow: none;
         }
         
+        /* Hide scrollbars but keep functionality */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
+        
         /* This container is crucial. It holds the canvas and gives it a 
           responsive 4:3 aspect ratio, which our resizeCanvas() function uses.
         */
@@ -43,6 +52,21 @@
             display: block;
             background-color: #374151; /* gray-700, to see the game area */
         }
+        
+        /* Game container should fit viewport */
+        #game-container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            max-width: 100vw;
+        }
+        
+        /* Level select cards */
+        .level-card {
+            min-width: 300px;
+            max-width: 400px;
+            scroll-snap-align: center;
+        }
     </style>
     
     <script type="module">
@@ -53,11 +77,12 @@
         
         // --- UI Elements ---
         // These will be assigned in init() after the page loads
-        let loadingOverlay, mainMenu, gameContainer, levelSelectContainer, armoryContainer, gemDisplay;
+        let loadingOverlay, startMenu, mainMenu, gameContainer, levelSelectContainer, armoryContainer, gemDisplay, gemDisplayStart;
+        let navLevels, navArmory, levelSelectView, armoryView, levelNavLeft, levelNavRight, backToStartBtn, startPlayBtn;
         let canvas, ctx, moneyDisplay, livesDisplay, levelDisplay, waveDisplay, startWaveBtn, towerSelectionUI, backToMenuBtn;
         let messageBox, messageTitle, messageText, messageButton1, messageButton2;
         // --- NEW UPGRADE UI ELEMENTS ---
-        let turretMenu, turretMenuTitle, turretMenuStats, turretMenuUpgrade, turretMenuSell, turretMenuClose;
+        let turretMenu, turretMenuTitle, turretMenuStats, turretMenuUpgrade, turretMenuSell, turretMenuClose, turretMenuUpgradePreview;
         
         // --- DEBUG MENU ELEMENTS ---
         let debugMenu, debugClose, debugAddGems, debugAddMoney, debugUnlockAll, debugMaxAll, debugAddLives;
@@ -79,6 +104,7 @@
         let turrets = [];
         let enemies = [];
         let projectiles = [];
+        let particles = []; // For visual effects
         let spawnQueue = [];
         let spawnCounter = 0;
         let currentPath = []; // Will be set when level loads
@@ -400,6 +426,7 @@
         function showMainMenu() {
             // Hide game, show menu
             gameContainer.style.display = 'none';
+            startMenu.style.display = 'none';
             mainMenu.style.display = 'flex';
             messageBox.style.display = 'none';
             closeTurretMenu();
@@ -412,73 +439,111 @@
             
             // Refresh menu data
             updateMenuUI();
+            switchMenuTab('levels'); // Default to levels tab
         }
         
         function updateMenuUI() {
             if (!playerData) return;
             
             gemDisplay.textContent = playerData.gems || 0;
+            if (gemDisplayStart) gemDisplayStart.textContent = playerData.gems || 0;
             
-            // --- Populate Level Select ---
+            // --- Populate Level Select with horizontal cards ---
             levelSelectContainer.innerHTML = ''; // Clear old list
             levels.forEach((level, index) => {
                 const levelCard = document.createElement('div');
-                levelCard.className = 'bg-gray-800 p-4 rounded-lg shadow-lg flex justify-between items-center';
+                levelCard.className = 'level-card bg-gray-800 p-6 rounded-xl shadow-2xl mx-4 flex flex-col justify-between';
+                
+                const difficultyColor = level.difficulty === 'Easy' ? 'text-green-400' : 
+                                       level.difficulty === 'Medium' ? 'text-yellow-400' : 
+                                       level.difficulty === 'Hard' ? 'text-orange-400' :
+                                       level.difficulty === 'Very Hard' ? 'text-red-400' : 'text-purple-400';
                 
                 levelCard.innerHTML = `
                     <div>
-                        <h3 class="text-xl font-bold text-white">Level ${index + 1}</h3>
-                        <p class="text-sm text-gray-400">
-                            Difficulty: <span class="font-semibold ${level.difficulty === 'Easy' ? 'text-green-400' : (level.difficulty === 'Medium' ? 'text-yellow-400' : 'text-red-400')}">${level.difficulty}</span> | 
-                            Waves: <span class="font-semibold text-blue-300">${level.waves.length}</span>
+                        <h3 class="text-2xl font-bold text-white mb-2">Level ${index + 1}</h3>
+                        <p class="text-lg mb-3">
+                            <span class="font-semibold ${difficultyColor}">${level.difficulty}</span>
                         </p>
-                        <p class="text-sm text-gray-400">
-                            Starting: <span class="font-semibold text-green-300">$${level.startingMoney}</span> | 
-                            Reward: <span class="font-semibold text-purple-300">${level.gemReward} Gems</span>
-                        </p>
+                        <div class="space-y-2 text-sm text-gray-300">
+                            <p>Waves: <span class="font-semibold text-blue-300">${level.waves.length}</span></p>
+                            <p>Starting Money: <span class="font-semibold text-green-300">$${level.startingMoney}</span></p>
+                            <p>Starting Lives: <span class="font-semibold text-red-300">${level.startingLives}</span></p>
+                            <p>Reward: <span class="font-semibold text-purple-300">${level.gemReward} Gems</span></p>
+                        </div>
                     </div>
+                    <button class="mt-4 game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg w-full">
+                        Play Level
+                    </button>
                 `;
                 
-                const playButton = document.createElement('button');
-                playButton.textContent = 'Play';
-                playButton.className = 'game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg';
-                playButton.onclick = () => startGame(index);
-                
-                levelCard.appendChild(playButton);
+                levelCard.querySelector('button').onclick = () => startGame(index);
                 levelSelectContainer.appendChild(levelCard);
             });
             
-            // --- Populate Armory ---
+            // --- Populate Armory with upgrade comparisons ---
             armoryContainer.innerHTML = ''; // Clear old list
             Object.entries(turretTypes).forEach(([id, stats]) => {
                 const currentMaxLevel = playerData.turretMaxLevels[id] || 0;
+                const baseStats = getTurretStats(id, 1);
+                const maxStats = getTurretStats(id, currentMaxLevel || 1);
+                const nextLevelStats = currentMaxLevel > 0 && currentMaxLevel < 4 ? getTurretStats(id, currentMaxLevel + 1) : null;
                 
                 const turretCard = document.createElement('div');
-                turretCard.className = 'bg-gray-800 p-4 rounded-lg shadow-lg flex justify-between items-center';
+                turretCard.className = 'bg-gray-800 p-6 rounded-xl shadow-2xl';
                 
-                // Get stats for Lvl 1 to display
-                const baseStats = getTurretStats(id, 1);
+                let upgradePreview = '';
+                if (nextLevelStats && currentMaxLevel > 0) {
+                    const dmgDiff = nextLevelStats.damage - maxStats.damage;
+                    const rangeDiff = nextLevelStats.range - maxStats.range;
+                    const rateDiff = nextLevelStats.fireRate - maxStats.fireRate;
+                    upgradePreview = `
+                        <div class="mt-4 p-3 bg-gray-700 rounded-lg border border-purple-500">
+                            <p class="text-xs text-purple-300 font-semibold mb-2">Next Level Preview:</p>
+                            <div class="text-xs space-y-1">
+                                ${dmgDiff > 0 ? `<p>Damage: <span class="text-green-400">+${dmgDiff}</span></p>` : ''}
+                                ${rangeDiff > 0 ? `<p>Range: <span class="text-blue-400">+${rangeDiff}</span></p>` : ''}
+                                ${rateDiff < 0 ? `<p>Fire Rate: <span class="text-yellow-400">${rateDiff} (faster)</span></p>` : rateDiff > 0 ? `<p>Fire Rate: <span class="text-red-400">+${rateDiff} (slower)</span></p>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
                 
                 turretCard.innerHTML = `
                     <div>
-                        <h3 class="text-xl font-bold" style="color:${stats.color}">${stats.name}</h3>
-                        <p class="text-sm text-gray-400">${stats.description}</p>
-                        <p class="text-sm text-gray-400">
-                            Lvl 1 Cost: <span class="font-semibold text-green-300">$${baseStats.cost}</span> | 
-                            Lvl 1 Range: <span class="font-semibold text-blue-300">${baseStats.range}</span> |
-                            Lvl 1 DMG: <span class="font-semibold text-red-300">${baseStats.damage}</span>
-                        </p>
-                        <p class="text-sm text-gray-400 mt-1">
+                        <h3 class="text-2xl font-bold mb-2" style="color:${stats.color}">${stats.name}</h3>
+                        <p class="text-sm text-gray-400 mb-4">${stats.description}</p>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div class="bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-400 mb-1">Level 1 Stats</p>
+                                <p class="text-sm">Cost: <span class="font-bold text-green-300">$${baseStats.cost}</span></p>
+                                <p class="text-sm">DMG: <span class="font-bold text-red-300">${baseStats.damage}</span></p>
+                                <p class="text-sm">Range: <span class="font-bold text-blue-300">${baseStats.range}</span></p>
+                                <p class="text-sm">Rate: <span class="font-bold text-yellow-300">${baseStats.fireRate}</span></p>
+                            </div>
+                            <div class="bg-gray-700 p-3 rounded-lg">
+                                <p class="text-xs text-gray-400 mb-1">Max Level ${currentMaxLevel || 'Locked'} Stats</p>
+                                ${currentMaxLevel > 0 ? `
+                                    <p class="text-sm">DMG: <span class="font-bold text-red-300">${maxStats.damage}</span></p>
+                                    <p class="text-sm">Range: <span class="font-bold text-blue-300">${maxStats.range}</span></p>
+                                    <p class="text-sm">Rate: <span class="font-bold text-yellow-300">${maxStats.fireRate}</span></p>
+                                ` : '<p class="text-sm text-gray-500">Locked</p>'}
+                            </div>
+                        </div>
+                        
+                        ${upgradePreview}
+                        
+                        <p class="text-sm text-gray-400 mt-3">
                             Current Max Level: <span class="font-bold text-yellow-400">${currentMaxLevel}</span>
                         </p>
                     </div>
                 `;
                 
                 const unlockButton = document.createElement('button');
-                unlockButton.className = 'game-button text-white font-bold py-2 px-4 rounded-lg w-48 text-center';
+                unlockButton.className = 'game-button text-white font-bold py-3 px-6 rounded-lg w-full mt-4 text-center';
                 
                 if (currentMaxLevel === 0) {
-                    // --- Turret is LOCKED ---
                     unlockButton.textContent = `Unlock (${stats.gemUnlockCost} Gems)`;
                     if (playerData.gems >= stats.gemUnlockCost) {
                         unlockButton.className += ' bg-purple-600 hover:bg-purple-700';
@@ -488,12 +553,9 @@
                         unlockButton.disabled = true;
                     }
                 } else {
-                    // --- Turret is UNLOCKED, show MAX LEVEL UPGRADE ---
-                    const nextUpgradeCost = stats.gemUpgradeCost[currentMaxLevel - 1]; // e.g., at Lvl 1, check index 0 for Lvl 2 cost
-                    
+                    const nextUpgradeCost = stats.gemUpgradeCost[currentMaxLevel - 1];
                     if (nextUpgradeCost !== undefined) {
-                        // --- Can be upgraded further ---
-                        unlockButton.textContent = `Upgrade Max (${nextUpgradeCost} Gems)`;
+                        unlockButton.textContent = `Upgrade Max to Lvl ${currentMaxLevel + 1} (${nextUpgradeCost} Gems)`;
                         if (playerData.gems >= nextUpgradeCost) {
                             unlockButton.className += ' bg-purple-600 hover:bg-purple-700';
                             unlockButton.onclick = () => upgradeMaxTurretLevel(id, nextUpgradeCost);
@@ -502,7 +564,6 @@
                             unlockButton.disabled = true;
                         }
                     } else {
-                        // --- Fully maxed out ---
                         unlockButton.textContent = 'Maxed Out';
                         unlockButton.className += ' bg-gray-600 cursor-not-allowed';
                         unlockButton.disabled = true;
@@ -593,11 +654,23 @@
         async function init() {
             // --- Assign all UI elements ---
             loadingOverlay = document.getElementById('loading-overlay');
+            startMenu = document.getElementById('start-menu');
             mainMenu = document.getElementById('main-menu');
             gameContainer = document.getElementById('game-container');
             levelSelectContainer = document.getElementById('level-select-container');
             armoryContainer = document.getElementById('armory-container');
             gemDisplay = document.getElementById('gem-display');
+            gemDisplayStart = document.getElementById('gem-display-start');
+            
+            // New menu elements
+            navLevels = document.getElementById('nav-levels');
+            navArmory = document.getElementById('nav-armory');
+            levelSelectView = document.getElementById('level-select-view');
+            armoryView = document.getElementById('armory-view');
+            levelNavLeft = document.getElementById('level-nav-left');
+            levelNavRight = document.getElementById('level-nav-right');
+            backToStartBtn = document.getElementById('back-to-start-btn');
+            startPlayBtn = document.getElementById('start-play-btn');
 
             canvas = document.getElementById('game-canvas');
             ctx = canvas.getContext('2d');
@@ -622,13 +695,22 @@
             turretMenuUpgrade = document.getElementById('turret-menu-upgrade');
             turretMenuSell = document.getElementById('turret-menu-sell');
             turretMenuClose = document.getElementById('turret-menu-close');
+            turretMenuUpgradePreview = document.getElementById('turret-menu-upgrade-preview');
             // --- End of element assignment ---
 
             window.addEventListener('resize', resizeCanvas);
             canvas.addEventListener('mousemove', onMouseMove);
             canvas.addEventListener('click', onMouseClick);
             startWaveBtn.addEventListener('click', startWave);
-            backToMenuBtn.addEventListener('click', showMainMenu);
+            backToMenuBtn.addEventListener('click', showStartMenu);
+            
+            // Menu navigation
+            startPlayBtn.addEventListener('click', showMainMenu);
+            backToStartBtn.addEventListener('click', showStartMenu);
+            navLevels.addEventListener('click', () => switchMenuTab('levels'));
+            navArmory.addEventListener('click', () => switchMenuTab('armory'));
+            levelNavLeft.addEventListener('click', () => scrollLevels(-1));
+            levelNavRight.addEventListener('click', () => scrollLevels(1));
 
             // --- Turret Menu Listeners ---
             turretMenuClose.addEventListener('click', closeTurretMenu);
@@ -696,7 +778,48 @@
             
             updateMenuUI();
             loadingOverlay.style.display = 'none';
-            mainMenu.style.display = 'flex';
+            showStartMenu();
+        }
+        
+        function showStartMenu() {
+            startMenu.style.display = 'flex';
+            mainMenu.style.display = 'none';
+            gameContainer.style.display = 'none';
+            messageBox.style.display = 'none';
+            closeTurretMenu();
+            
+            if (gameLoopId) {
+                cancelAnimationFrame(gameLoopId);
+                gameLoopId = null;
+            }
+            
+            if (playerData) {
+                gemDisplayStart.textContent = playerData.gems || 0;
+            }
+        }
+        
+        function switchMenuTab(tab) {
+            if (tab === 'levels') {
+                levelSelectView.classList.remove('hidden');
+                armoryView.classList.add('hidden');
+                navLevels.classList.remove('bg-gray-700');
+                navLevels.classList.add('bg-blue-600', 'text-white');
+                navArmory.classList.remove('bg-blue-600', 'text-white');
+                navArmory.classList.add('bg-gray-700', 'text-gray-300');
+            } else {
+                levelSelectView.classList.add('hidden');
+                armoryView.classList.remove('hidden');
+                navArmory.classList.remove('bg-gray-700');
+                navArmory.classList.add('bg-blue-600', 'text-white');
+                navLevels.classList.remove('bg-blue-600', 'text-white');
+                navLevels.classList.add('bg-gray-700', 'text-gray-300');
+            }
+        }
+        
+        function scrollLevels(direction) {
+            const container = levelSelectContainer;
+            const scrollAmount = 400;
+            container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
         }
 
         // Load a level's data
@@ -712,6 +835,7 @@
             turrets = [];
             enemies = [];
             projectiles = [];
+            particles = [];
             spawnQueue = [];
             selectedTurret = null;
             selectedTowerType = null;
@@ -795,10 +919,12 @@
             
             updateTurrets(deltaTime);
             updateProjectiles(deltaTime);
+            updateParticles(deltaTime);
 
             drawTurrets();
             drawEnemies();
             drawProjectiles();
+            drawParticles();
             drawGhostTower();
             
             if (gameState !== 'gameover' && gameState !== 'win') {
@@ -839,6 +965,8 @@
                 const enemy = enemies[i];
                 
                 if (enemy.currentHp <= 0) {
+                    // Create death particles
+                    createDeathParticles(enemy.x, enemy.y, enemy.color, enemy.radius);
                     money += enemy.reward;
                     updateInGameUI();
                     enemies.splice(i, 1);
@@ -988,15 +1116,99 @@
 
         function drawEnemies() {
             enemies.forEach(enemy => {
-                ctx.fillStyle = enemy.color;
-                ctx.beginPath(); ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2); ctx.fill();
-                const hpBarWidth = enemy.radius * 2; const hpBarHeight = 5;
-                const hpBarX = enemy.x - enemy.radius; const hpBarY = enemy.y - enemy.radius - 8;
-                ctx.fillStyle = '#1f2937'; ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
+                // Draw enemy with gradient and shadow for depth
+                const gradient = ctx.createRadialGradient(enemy.x, enemy.y, 0, enemy.x, enemy.y, enemy.radius);
+                gradient.addColorStop(0, enemy.color);
+                gradient.addColorStop(1, darkenColor(enemy.color, 0.3));
+                
+                // Shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.beginPath();
+                ctx.ellipse(enemy.x + 2, enemy.y + enemy.radius + 2, enemy.radius * 0.8, enemy.radius * 0.3, 0, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Main body
+                ctx.fillStyle = gradient;
+                ctx.beginPath();
+                ctx.arc(enemy.x, enemy.y, enemy.radius, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Highlight
+                ctx.fillStyle = lightenColor(enemy.color, 0.3);
+                ctx.beginPath();
+                ctx.arc(enemy.x - enemy.radius * 0.3, enemy.y - enemy.radius * 0.3, enemy.radius * 0.4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // HP Bar
+                const hpBarWidth = enemy.radius * 2;
+                const hpBarHeight = 5;
+                const hpBarX = enemy.x - enemy.radius;
+                const hpBarY = enemy.y - enemy.radius - 8;
+                ctx.fillStyle = '#1f2937';
+                ctx.fillRect(hpBarX, hpBarY, hpBarWidth, hpBarHeight);
                 const hpPercent = enemy.currentHp / enemy.hp;
                 ctx.fillStyle = hpPercent > 0.5 ? '#22c55e' : (hpPercent > 0.2 ? '#f59e0b' : '#ef4444');
                 ctx.fillRect(hpBarX, hpBarY, hpBarWidth * hpPercent, hpBarHeight);
             });
+        }
+        
+        function createDeathParticles(x, y, color, radius) {
+            const particleCount = Math.max(8, Math.floor(radius * 2));
+            for (let i = 0; i < particleCount; i++) {
+                const angle = (Math.PI * 2 * i) / particleCount;
+                const speed = 2 + Math.random() * 3;
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: Math.cos(angle) * speed,
+                    vy: Math.sin(angle) * speed,
+                    life: 1.0,
+                    decay: 0.02 + Math.random() * 0.02,
+                    size: 3 + Math.random() * 3,
+                    color: color
+                });
+            }
+        }
+        
+        function updateParticles(deltaTime) {
+            for (let i = particles.length - 1; i >= 0; i--) {
+                const p = particles[i];
+                p.x += p.vx * deltaTime;
+                p.y += p.vy * deltaTime;
+                p.life -= p.decay * deltaTime;
+                p.vy += 0.2 * deltaTime; // Gravity
+                
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                }
+            }
+        }
+        
+        function drawParticles() {
+            particles.forEach(p => {
+                ctx.globalAlpha = p.life;
+                ctx.fillStyle = p.color;
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+                ctx.fill();
+            });
+            ctx.globalAlpha = 1.0;
+        }
+        
+        function darkenColor(color, amount) {
+            const hex = color.replace('#', '');
+            const r = Math.max(0, parseInt(hex.substr(0, 2), 16) * (1 - amount));
+            const g = Math.max(0, parseInt(hex.substr(2, 2), 16) * (1 - amount));
+            const b = Math.max(0, parseInt(hex.substr(4, 2), 16) * (1 - amount));
+            return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
+        }
+        
+        function lightenColor(color, amount) {
+            const hex = color.replace('#', '');
+            const r = Math.min(255, parseInt(hex.substr(0, 2), 16) + (255 * amount));
+            const g = Math.min(255, parseInt(hex.substr(2, 2), 16) + (255 * amount));
+            const b = Math.min(255, parseInt(hex.substr(4, 2), 16) + (255 * amount));
+            return `rgb(${Math.floor(r)}, ${Math.floor(g)}, ${Math.floor(b)})`;
         }
 
         function drawTurrets() {
@@ -1004,52 +1216,105 @@
                 const stats = getTurretStats(turret.type, turret.level);
                 const x = turret.x; const y = turret.y;
                 
-                // Draw range circle
-                ctx.fillStyle = 'rgba(100, 100, 100, 0.1)';
-                ctx.strokeStyle = 'rgba(150, 150, 150, 0.3)';
-                ctx.lineWidth = 1; 
-                ctx.beginPath();
-                ctx.arc(x, y, stats.range, 0, Math.PI * 2);
-                ctx.fill(); ctx.stroke();
+                // Draw range circle (only when selected or placing)
+                if (turret === selectedTurret) {
+                    ctx.fillStyle = 'rgba(59, 130, 246, 0.1)';
+                    ctx.strokeStyle = 'rgba(59, 130, 246, 0.4)';
+                    ctx.lineWidth = 2; 
+                    ctx.beginPath();
+                    ctx.arc(x, y, stats.range, 0, Math.PI * 2);
+                    ctx.fill(); ctx.stroke();
+                }
 
                 // Draw selection circle if this turret is selected
                 if (turret === selectedTurret) {
                     ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    ctx.arc(x, y, 16, 0, Math.PI * 2);
+                    ctx.stroke();
+                    
+                    // Pulsing effect
+                    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
                     ctx.lineWidth = 2;
                     ctx.beginPath();
-                    ctx.arc(x, y, 16, 0, Math.PI * 2); // Slightly larger than base
+                    ctx.arc(x, y, 18, 0, Math.PI * 2);
                     ctx.stroke();
                 }
 
-                // Draw turret base
-                ctx.fillStyle = stats.color;
-                ctx.beginPath(); ctx.arc(x, y, 12, 0, Math.PI * 2); ctx.fill();
+                // Draw turret base with gradient
+                const baseGradient = ctx.createRadialGradient(x, y, 0, x, y, 12);
+                baseGradient.addColorStop(0, lightenColor(stats.color, 0.2));
+                baseGradient.addColorStop(1, stats.color);
+                ctx.fillStyle = baseGradient;
+                ctx.beginPath();
+                ctx.arc(x, y, 12, 0, Math.PI * 2);
+                ctx.fill();
                 
-                // Draw turret gun
-                ctx.save(); ctx.translate(x, y); ctx.rotate(turret.angle); 
-                ctx.fillStyle = '#a0aec0'; ctx.fillRect(0, -3, 18, 6); 
-                ctx.restore(); 
+                // Base border
+                ctx.strokeStyle = darkenColor(stats.color, 0.3);
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                
+                // Draw turret gun with better detail
+                ctx.save();
+                ctx.translate(x, y);
+                ctx.rotate(turret.angle);
+                
+                // Gun shadow
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+                ctx.fillRect(2, 1, 18, 6);
+                
+                // Gun body
+                const gunGradient = ctx.createLinearGradient(0, -3, 0, 3);
+                gunGradient.addColorStop(0, '#cbd5e1');
+                gunGradient.addColorStop(1, '#64748b');
+                ctx.fillStyle = gunGradient;
+                ctx.fillRect(0, -3, 18, 6);
+                
+                // Gun tip
+                ctx.fillStyle = '#475569';
+                ctx.fillRect(16, -2, 4, 4);
+                
+                ctx.restore();
 
-                // Draw level pips
-                ctx.fillStyle = '#f59e0b'; // amber-500
+                // Draw level pips with glow
                 const pipCount = turret.level;
-                const pipRadius = 2;
-                const pipSpacing = 5;
+                const pipRadius = 3;
+                const pipSpacing = 6;
                 const totalPipWidth = (pipCount - 1) * pipSpacing;
                 const startX = x - totalPipWidth / 2;
-                const yOffset = 15; // Below the turret
+                const yOffset = 18;
                 for (let i = 0; i < pipCount; i++) {
+                    const pipX = startX + i * pipSpacing;
+                    // Glow
+                    ctx.shadowBlur = 5;
+                    ctx.shadowColor = '#f59e0b';
+                    ctx.fillStyle = '#f59e0b';
                     ctx.beginPath();
-                    ctx.arc(startX + i * pipSpacing, y + yOffset, pipRadius, 0, Math.PI * 2);
+                    ctx.arc(pipX, y + yOffset, pipRadius, 0, Math.PI * 2);
                     ctx.fill();
+                    ctx.shadowBlur = 0;
                 }
             });
         }
         
         function drawProjectiles() {
             projectiles.forEach(p => {
+                // Glow effect
+                ctx.shadowBlur = 8;
+                ctx.shadowColor = p.color;
                 ctx.fillStyle = p.color;
-                ctx.beginPath(); ctx.arc(p.x, p.y, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+                ctx.fill();
+                
+                // Core
+                ctx.shadowBlur = 0;
+                ctx.fillStyle = lightenColor(p.color, 0.5);
+                ctx.beginPath();
+                ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+                ctx.fill();
             });
         }
 
@@ -1139,8 +1404,26 @@
                 <p>Rate: <span class="font-bold text-white">${stats.fireRate}</span></p>
             `;
             
-            // 2. Configure Upgrade Button
+            // 2. Show Upgrade Preview if upgrade available
             const maxLevel = playerData.turretMaxLevels[turret.type];
+            if (turret.level < maxLevel && stats.nextUpgradeCost) {
+                const nextStats = getTurretStats(turret.type, turret.level + 1);
+                const dmgDiff = nextStats.damage - stats.damage;
+                const rangeDiff = nextStats.range - stats.range;
+                const rateDiff = nextStats.fireRate - stats.fireRate;
+                
+                turretMenuUpgradePreview.innerHTML = `
+                    <p class="text-purple-300 font-semibold mb-1">Next Level:</p>
+                    ${dmgDiff > 0 ? `<p>DMG: <span class="text-green-400">${stats.damage} → ${nextStats.damage} (+${dmgDiff})</span></p>` : ''}
+                    ${rangeDiff > 0 ? `<p>Range: <span class="text-blue-400">${stats.range} → ${nextStats.range} (+${rangeDiff})</span></p>` : ''}
+                    ${rateDiff !== 0 ? `<p>Rate: <span class="${rateDiff < 0 ? 'text-yellow-400' : 'text-red-400'}">${stats.fireRate} → ${nextStats.fireRate} (${rateDiff < 0 ? 'faster' : 'slower'})</span></p>` : ''}
+                `;
+                turretMenuUpgradePreview.style.display = 'block';
+            } else {
+                turretMenuUpgradePreview.style.display = 'none';
+            }
+            
+            // 3. Configure Upgrade Button
             if (turret.level >= maxLevel) {
                 turretMenuUpgrade.textContent = 'Max Level';
                 turretMenuUpgrade.disabled = true;
@@ -1157,7 +1440,7 @@
                 }
             }
 
-            // 3. Configure Sell Button
+            // 4. Configure Sell Button
             turretMenuSell.textContent = `Sell ($${stats.sellValue})`;
             
             // 4. Position and Show Menu
@@ -1344,61 +1627,86 @@
         <div class="text-2xl font-bold">Loading Game...</div>
     </div>
 
-    <!-- Main Menu -->
-    <div id="main-menu" class="hidden flex-col w-full max-w-4xl h-full max-h-[90vh] bg-gray-700 rounded-lg shadow-2xl p-6">
-        <div class="flex justify-between items-center border-b border-gray-600 pb-4 mb-4">
-            <h1 class="text-3xl font-bold text-white">Simple Tower Defense</h1>
-            <div class="text-lg font-semibold bg-gray-800 px-4 py-2 rounded-lg">
-                Gems: <span id="gem-display" class="text-purple-400 font-bold">0</span>
+    <!-- Start Menu -->
+    <div id="start-menu" class="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col items-center justify-center z-40">
+        <div class="text-center mb-8">
+            <h1 class="text-6xl font-bold text-white mb-4 drop-shadow-2xl" style="text-shadow: 0 0 20px rgba(147, 51, 234, 0.8);">TOWER DEFENSE</h1>
+            <div class="text-xl text-gray-300 mb-8">Defend your base from waves of enemies</div>
+            <div class="text-lg font-semibold bg-purple-900 bg-opacity-50 px-6 py-3 rounded-lg inline-block mb-8">
+                Gems: <span id="gem-display-start" class="text-purple-300 font-bold">0</span>
+            </div>
+        </div>
+        <button id="start-play-btn" class="game-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-2xl py-4 px-12 rounded-xl shadow-2xl transform transition-all duration-200 hover:scale-105">
+            PLAY
+        </button>
+    </div>
+
+    <!-- Main Menu (Level Select & Armory) -->
+    <div id="main-menu" class="hidden fixed inset-0 bg-gray-900 z-30">
+        <!-- Top Bar -->
+        <div class="bg-gray-800 border-b border-gray-700 p-4 flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-white">Tower Defense</h1>
+            <div class="flex items-center space-x-4">
+                <div class="text-lg font-semibold bg-gray-700 px-4 py-2 rounded-lg">
+                    Gems: <span id="gem-display" class="text-purple-400 font-bold">0</span>
+                </div>
+                <button id="back-to-start-btn" class="game-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Back</button>
             </div>
         </div>
         
-        <div class="flex-1 overflow-y-auto space-y-6">
-            <!-- Level Select Section -->
-            <div>
-                <h2 class="text-2xl font-semibold mb-3 text-blue-300">Select Level</h2>
-                <div id="level-select-container" class="space-y-4">
-                    <!-- Level cards will be injected here -->
-                </div>
+        <!-- Navigation Tabs -->
+        <div class="bg-gray-800 border-b border-gray-700 flex">
+            <button id="nav-levels" class="flex-1 py-4 px-6 text-lg font-semibold bg-blue-600 text-white">Levels</button>
+            <button id="nav-armory" class="flex-1 py-4 px-6 text-lg font-semibold bg-gray-700 hover:bg-gray-600 text-gray-300">Armory</button>
+        </div>
+        
+        <!-- Level Select View -->
+        <div id="level-select-view" class="flex-1 overflow-hidden relative">
+            <button id="level-nav-left" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white text-4xl font-bold w-16 h-16 rounded-full flex items-center justify-center shadow-lg">‹</button>
+            <div id="level-select-container" class="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory h-full items-center px-20">
+                <!-- Level cards will be injected here -->
             </div>
-            
-            <!-- Armory Section -->
-            <div>
-                <h2 class="text-2xl font-semibold mb-3 text-purple-300">Armory</h2>
-                <div id="armory-container" class="space-y-4">
-                    <!-- Turret unlock cards will be injected here -->
-                </div>
+            <button id="level-nav-right" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white text-4xl font-bold w-16 h-16 rounded-full flex items-center justify-center shadow-lg">›</button>
+        </div>
+        
+        <!-- Armory View -->
+        <div id="armory-view" class="hidden flex-1 overflow-y-auto p-6">
+            <div id="armory-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Turret cards will be injected here -->
             </div>
         </div>
     </div>
 
     <!-- Game Container -->
-    <div id="game-container" class="hidden w-full max-w-5xl">
+    <div id="game-container" class="hidden fixed inset-0 bg-gray-900 flex flex-col">
         <!-- Top Game UI Bar -->
-        <div class="bg-gray-800 p-4 rounded-t-lg flex justify-between items-center">
-            <div class="flex space-x-6">
-                <div class="text-xl">Money: <span id="money-display" class="font-bold text-green-400">0</span></div>
-                <div class="text-xl">Base HP: <span id="lives-display" class="font-bold text-red-400">0</span></div>
+        <div class="bg-gray-800 p-3 flex justify-between items-center flex-shrink-0">
+            <div class="flex space-x-4 text-sm md:text-base">
+                <div>Money: <span id="money-display" class="font-bold text-green-400">0</span></div>
+                <div>Base HP: <span id="lives-display" class="font-bold text-red-400">0</span></div>
             </div>
-            <div class="flex space-x-6 text-center">
-                <div class="text-xl">Level: <span id="level-display" class="font-bold text-blue-300">1</span></div>
-                <div class="text-xl">Wave: <span id="wave-display" class="font-bold text-yellow-300">0</span></div>
+            <div class="flex space-x-4 text-center text-sm md:text-base">
+                <div>Level: <span id="level-display" class="font-bold text-blue-300">1</span></div>
+                <div>Wave: <span id="wave-display" class="font-bold text-yellow-300">0</span></div>
             </div>
             <div class="flex space-x-2">
-                <button id="start-wave-btn" class="game-button bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Start Wave</button>
-                <button id="back-to-menu-btn" class="game-button bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg">Menu</button>
+                <button id="start-wave-btn" class="game-button bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 text-sm rounded-lg">Start Wave</button>
+                <button id="back-to-menu-btn" class="game-button bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 text-sm rounded-lg">Menu</button>
             </div>
         </div>
 
         <!-- Canvas Container (Handles Aspect Ratio AND Turret Menu) -->
-        <div id="game-canvas-container" class="bg-gray-700">
-            <canvas id="game-canvas" class="rounded-b-lg"></canvas>
+        <div id="game-canvas-container" class="bg-gray-700 flex-1 flex items-center justify-center min-h-0">
+            <canvas id="game-canvas"></canvas>
 
-            <!-- NEW: Turret Upgrade Menu -->
-            <div id="turret-menu" class="hidden absolute bg-gray-800 rounded-lg shadow-xl p-4 w-64 text-gray-300 border-2 border-gray-600 z-20">
+            <!-- Enhanced Turret Upgrade Menu -->
+            <div id="turret-menu" class="hidden absolute bg-gray-800 rounded-lg shadow-xl p-4 w-72 text-gray-300 border-2 border-blue-500 z-20">
                 <h3 id="turret-menu-title" class="text-xl font-bold mb-2 text-white">Turret</h3>
                 <div id="turret-menu-stats" class="text-sm space-y-1 mb-3">
                     <!-- Stats injected here -->
+                </div>
+                <div id="turret-menu-upgrade-preview" class="text-xs text-gray-400 mb-3 border-t border-gray-700 pt-2">
+                    <!-- Upgrade preview injected here -->
                 </div>
                 <div class="flex space-x-2">
                     <button id="turret-menu-upgrade" class="flex-1 game-button bg-green-600 hover:bg-green-700">Upgrade</button>
@@ -1409,7 +1717,7 @@
         </div>
 
         <!-- Bottom Tower Selection Bar -->
-        <div id="tower-selection-ui" class="mt-4 bg-gray-800 p-4 rounded-lg flex space-x-4 justify-center">
+        <div id="tower-selection-ui" class="bg-gray-800 p-2 flex space-x-2 justify-center overflow-x-auto flex-shrink-0">
             <!-- Tower buttons will be injected here -->
         </div>
     </div>
