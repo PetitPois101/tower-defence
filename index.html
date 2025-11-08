@@ -234,7 +234,8 @@
         
         // Local game state
         let gameLoopId = null; // To stop the game loop
-        
+        let updateLogs = []; // To store update logs from CSV
+
         // --- UI Elements ---
         // These will be assigned in init() after the page loads
         let loadingOverlay, startMenu, mainMenu, gameContainer, levelSelectContainer, armoryContainer, gemDisplay, gemDisplayStart, gemDisplayMenu;
@@ -1134,6 +1135,19 @@
             const settingsClearSlot = document.getElementById('settings-clear-slot');
             const settingsAudio = document.getElementById('settings-audio');
             const settingsMusic = document.getElementById('settings-music');
+
+            // --- Load Update Logs ---
+            try {
+                const response = await fetch('updates.csv');
+                const csvText = await response.text();
+                updateLogs = csvText.split('\n').slice(1).filter(row => row.trim() !== '').map(row => {
+                    const [version, log_entry] = row.split(',');
+                    return { version, log_entry };
+                });
+            } catch (error) {
+                console.error('Failed to load update logs:', error);
+            }
+
             // Armory elements removed - armory is now permanently visible in sidebar
 
             canvas = document.getElementById('game-canvas');
@@ -1180,8 +1194,21 @@
                 settingsMusic.checked = !!playerData.settings?.musicEnabled;
             }
 
+            function renderUpdateLogs() {
+                const updateLogList = document.getElementById('update-log-list');
+                if (updateLogList) {
+                    updateLogList.innerHTML = ''; // Clear existing logs
+                    updateLogs.forEach(log => {
+                        const listItem = document.createElement('li');
+                        listItem.textContent = log.log_entry;
+                        updateLogList.appendChild(listItem);
+                    });
+                }
+            }
+
             function openSettings() {
                 renderSettingsSlots();
+                renderUpdateLogs(); // Render update logs when settings open
                 settingsModal.classList.remove('hidden');
             }
             function closeSettings() {
@@ -2338,7 +2365,7 @@
     <!-- Settings Modal -->
     <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50">
         <div class="w-full h-full flex items-center justify-center">
-            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[92vw] max-w-[900px] p-6 flex flex-col">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[95vw] max-w-[950px] p-4 sm:p-6 flex flex-col max-h-[90vh]">
                 <div class="flex items-center justify-between mb-4">
                     <h2 class="text-2xl font-bold text-white">Settings</h2>
                     <button id="settings-close" class="text-gray-300 hover:text-white text-xl">&times;</button>
@@ -2361,6 +2388,15 @@
                             <input type="checkbox" id="settings-music" class="form-checkbox">
                             <span>Enable Music</span>
                         </label>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
+                        <h3 class="text-xl font-semibold text-purple-300 mb-3">Updates & Version</h3>
+                        <div class="bg-gray-700 p-3 rounded-lg text-sm">
+                            <p class="text-white font-bold mb-2">Version: V1.0.0</p>
+                            <ul id="update-log-list" class="list-disc list-inside text-gray-300 space-y-1">
+                                <!-- Update logs will be loaded here from updates.csv -->
+                            </ul>
+                        </div>
                     </div>
                     <div class="md:col-span-2 bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
                         <h3 class="text-lg font-bold text-white mb-2">Credits</h3>
