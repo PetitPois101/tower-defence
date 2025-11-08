@@ -41,16 +41,21 @@
           responsive 4:3 aspect ratio, which our resizeCanvas() function uses.
         */
         #game-canvas-container {
-            width: 100%;
-            max-width: 800px; /* Corresponds to canvas.width */
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            max-width: calc(100vw - 320px); /* Account for sidebar width */
+            max-height: calc(100vh - 100px); /* Account for UI elements */
             aspect-ratio: 4 / 3;
-            margin-left: auto;
-            margin-right: auto;
-            position: relative; /* For turret menu positioning */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         canvas {
             display: block;
             background-color: #374151; /* gray-700, to see the game area */
+            /* Positioning is handled dynamically by resizeCanvas function */
         }
         
         /* Game container should fit viewport */
@@ -59,6 +64,7 @@
             display: flex;
             flex-direction: column;
             max-width: 100vw;
+            position: relative; /* For absolute positioning of centered canvas */
         }
         
         /* Level select cards */
@@ -67,6 +73,160 @@
             max-width: 400px;
             scroll-snap-align: center;
         }
+
+        /* Compact and ultra-compact modes for level cards */
+        .level-card-compact .typography-title { font-size: clamp(16px, 1.8vw, 22px); }
+        .level-card-compact .typography-metric { font-size: clamp(14px, 1.8vw, 20px); }
+        .level-card-compact .typography-desc { font-size: clamp(11px, 1.2vw, 14px); }
+        .level-card-compact .card-pad { padding: clamp(8px, 1.1vw, 14px); }
+        .level-card-compact .grid { gap: 0.5rem; }
+
+        .level-card-ultra .level-card-metrics { display: none; }
+        .level-card-ultra .level-status-icon { display: none; }
+        .level-card-ultra .typography-title { font-size: clamp(18px, 2vw, 24px); }
+        
+        /* === NEW UI/UX IMPROVEMENTS === */
+        
+        /* Smooth menu transitions */
+        .menu-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .menu-fade-enter {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        .menu-fade-enter-active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .menu-slide-enter {
+            opacity: 0;
+            transform: translateX(-100%);
+        }
+        
+        .menu-slide-enter-active {
+            opacity: 1;
+            transform: translateX(0);
+        }
+        
+        /* Enhanced gameplay area */
+        #game-canvas-container.expanded {
+            max-width: 95vw;
+            max-height: 80vh;
+            margin: 0 auto;
+        }
+        
+        /* Improved menu layout */
+        .menu-header {
+            background: linear-gradient(135deg, #1f2937 0%, #374151 100%);
+            border-bottom: 2px solid #4b5563;
+        }
+        
+        .menu-content {
+            background: linear-gradient(135deg, #111827 0%, #1f2937 100%);
+        }
+        
+        /* Level-specific color schemes */
+        .level-theme-forest {
+            --path-color: #8b4513;
+            --path-texture: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23d2b48c"/><circle cx="5" cy="5" r="1" fill="%23a0522d"/><circle cx="15" cy="15" r="1" fill="%23a0522d"/></svg>');
+        }
+        
+        .level-theme-desert {
+            --path-color: #daa520;
+            --path-texture: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23f4a460"/><circle cx="3" cy="3" r="0.5" fill="%23d2691e"/><circle cx="17" cy="17" r="0.5" fill="%23d2691e"/></svg>');
+        }
+        
+        .level-theme-snow {
+            --path-color: #e0e0e0;
+            --path-texture: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23f0f8ff"/><circle cx="10" cy="10" r="2" fill="%23b0e0e6" opacity="0.3"/></svg>');
+        }
+        
+        .level-theme-volcanic {
+            --path-color: #8b0000;
+            --path-texture: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20"><rect width="20" height="20" fill="%23a52a2a"/><circle cx="7" cy="7" r="1" fill="%23ff4500"/><circle cx="13" cy="13" r="1" fill="%23ff6347"/></svg>');
+        }
+        
+        /* Responsive design improvements */
+        @media (max-width: 1024px) {
+            #armory-sidebar {
+                width: 16rem; /* Reduce sidebar width on smaller screens */
+            }
+            #game-canvas-container {
+                max-width: calc(100vw - 16rem - 20px); /* Account for reduced sidebar */
+            }
+        }
+        
+        @media (max-width: 768px) {
+            #armory-sidebar {
+                width: 14rem; /* Further reduce sidebar width */
+            }
+            #game-canvas-container {
+                max-width: calc(100vw - 14rem - 20px);
+                max-height: 70vh;
+            }
+            #game-canvas-container.expanded {
+                max-width: 100vw;
+                max-height: 70vh;
+            }
+            .level-card {
+                min-width: 250px;
+                max-width: 300px;
+            }
+        }
+        
+        @media (max-width: 640px) {
+            /* Mobile layout - stack sidebar on top */
+            #main-menu > .flex {
+                flex-direction: column;
+            }
+            #armory-sidebar {
+                width: 100%;
+                height: 40vh; /* Take up top portion */
+                border-right: none;
+                border-bottom: 1px solid #374151;
+            }
+            #game-canvas-container {
+                max-width: 95vw;
+                max-height: 60vh;
+                position: relative; /* Reset positioning for mobile */
+                transform: none;
+                top: auto;
+                left: auto;
+            }
+            .level-card {
+                min-width: 200px;
+                max-width: 250px;
+            }
+        }
+
+        /* --- Responsive Typography and Spacing --- */
+        /* Scales typography using viewport while enforcing readable minimums */
+        .typography-title { font-size: clamp(18px, 2.2vw, 28px); line-height: 1.2; }
+        .typography-desc { font-size: clamp(12px, 1.5vw, 16px); line-height: 1.45; }
+        .typography-metric { font-size: clamp(16px, 2.2vw, 24px); line-height: 1.3; }
+        .typography-button { font-size: clamp(14px, 1.9vw, 18px); }
+        .icon-lg { font-size: clamp(22px, 2.6vw, 32px); }
+        .icon-md { font-size: clamp(16px, 2.0vw, 24px); }
+
+        /* Scales card padding and gaps to preserve content visibility */
+        .card-pad { padding: clamp(10px, 1.4vw, 18px); }
+        .card-gap { gap: clamp(8px, 1.2vw, 16px); }
+        .section-margin { margin-bottom: clamp(12px, 1.8vw, 24px); }
+        .btn-min { min-height: 48px; min-width: 48px; }
+
+        /* Themed scrollbar to match site aesthetics */
+        .scrollbar-themed {
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: #6b21a8 #1f2937; /* thumb track */
+        }
+        .scrollbar-themed::-webkit-scrollbar { width: 10px; height: 10px; }
+        .scrollbar-themed::-webkit-scrollbar-track { background: #1f2937; border-radius: 9999px; }
+        .scrollbar-themed::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #7c3aed, #6b21a8); border-radius: 9999px; border: 2px solid #111827; }
+        .scrollbar-themed::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #8b5cf6, #7c3aed); }
     </style>
     
     <script type="module">
@@ -77,9 +237,10 @@
         
         // --- UI Elements ---
         // These will be assigned in init() after the page loads
-        let loadingOverlay, startMenu, mainMenu, gameContainer, levelSelectContainer, armoryContainer, gemDisplay, gemDisplayStart;
+        let loadingOverlay, startMenu, mainMenu, gameContainer, levelSelectContainer, armoryContainer, gemDisplay, gemDisplayStart, gemDisplayMenu;
         let navLevels, navArmory, levelSelectView, armoryView, levelNavLeft, levelNavRight, backToStartBtn, startPlayBtn;
-        let canvas, ctx, moneyDisplay, livesDisplay, levelDisplay, waveDisplay, startWaveBtn, towerSelectionUI, backToMenuBtn;
+        let canvas, ctx, moneyDisplay, livesDisplay, levelDisplay, waveDisplay, startWaveBtn, towerSelectionUI, backToMenuBtn, speedDownBtn, speedUpBtn, speedDisplay;
+        let armoryToggleBtn, armorySection, armoryCloseBtn;
         let messageBox, messageTitle, messageText, messageButton1, messageButton2;
         // --- NEW UPGRADE UI ELEMENTS ---
         let turretMenu, turretMenuTitle, turretMenuStats, turretMenuUpgrade, turretMenuSell, turretMenuClose, turretMenuUpgradePreview;
@@ -99,6 +260,12 @@
         let selectedTurret = null; // The actual turret object on the map (for upgrading)
         let mouse = { x: 0, y: 0 };
         let lastTime = 0;
+        let gameSpeed = 1; // gameplay speed multiplier, clamped 1x–8x
+        // --- Level stats tracking ---
+        let enemiesDefeated = 0;
+        let moneyEarned = 0;
+        let turretsPlaced = 0;
+        let elapsedTimeMs = 0;
 
         // Game Objects (In-Level)
         let turrets = [];
@@ -110,7 +277,75 @@
         let currentPath = []; // Will be set when level loads
         const pathWidth = 30;
         
-        // --- Player's Data (Resets on Refresh) ---
+        // --- Save System ---
+        const SAVE_SLOT_KEY = 'td_save_slot';
+        const SAVE_PREFIX = 'td_save_'; // e.g., td_save_1..4
+
+        function getDefaultPlayerData(turretTypes) {
+            const turretMaxLevels = {};
+            Object.keys(turretTypes || {}).forEach(id => {
+                turretMaxLevels[id] = id === 'basic' ? 1 : 0;
+            });
+            return {
+                gems: 10,
+                turretMaxLevels,
+                completedLevels: [],
+                settings: { audioEnabled: true, musicEnabled: true }
+            };
+        }
+
+        function getActiveSlot() {
+            const slot = parseInt(localStorage.getItem(SAVE_SLOT_KEY) || '1', 10);
+            return Math.min(Math.max(slot || 1, 1), 4);
+        }
+
+        function setActiveSlot(slot) {
+            localStorage.setItem(SAVE_SLOT_KEY, String(slot));
+        }
+
+        function saveToSlot(slot, data) {
+            try { localStorage.setItem(`${SAVE_PREFIX}${slot}`, JSON.stringify(data)); } catch {}
+        }
+
+        function loadFromSlot(slot) {
+            const raw = localStorage.getItem(`${SAVE_PREFIX}${slot}`);
+            if (!raw) return null;
+            try { return JSON.parse(raw); } catch { return null; }
+        }
+
+        function mergeDataWithDefaults(loaded, turretTypes) {
+            const defaults = getDefaultPlayerData(turretTypes);
+            const data = loaded || {};
+            return {
+                gems: typeof data.gems === 'number' ? data.gems : defaults.gems,
+                turretMaxLevels: { ...defaults.turretMaxLevels, ...(data.turretMaxLevels || {}) },
+                completedLevels: Array.isArray(data.completedLevels) ? data.completedLevels : defaults.completedLevels,
+                settings: { ...defaults.settings, ...(data.settings || {}) }
+            };
+        }
+
+        function saveProgress() {
+            const slot = getActiveSlot();
+            saveToSlot(slot, playerData);
+        }
+
+        function switchSaveSlot(slot, turretTypes) {
+            setActiveSlot(slot);
+            const loaded = loadFromSlot(slot);
+            playerData = mergeDataWithDefaults(loaded, turretTypes);
+            saveProgress();
+            updateMenuUI();
+        }
+
+        function clearSaveSlot(slot, turretTypes) {
+            localStorage.removeItem(`${SAVE_PREFIX}${slot}`);
+            playerData = getDefaultPlayerData(turretTypes);
+            setActiveSlot(slot);
+            saveProgress();
+            updateMenuUI();
+        }
+
+        // --- Player's Data (initial value; will be replaced by loaded save) ---
         // NEW DATA STRUCTURE:
         // 0 = Locked
         // 1 = Unlocked (Base Level 1)
@@ -122,7 +357,9 @@
                 'basic': 1,
                 'sniper': 0,
                 'flamethrower': 0
-            }
+            },
+            completedLevels: [],
+            settings: { audioEnabled: true, musicEnabled: true }
         };
 
 
@@ -424,172 +661,351 @@
         // === MAIN MENU & UI LOGIC ===
         
         function showMainMenu() {
-            // Hide game, show menu
-            gameContainer.style.display = 'none';
-            startMenu.style.display = 'none';
-            mainMenu.style.display = 'flex';
-            messageBox.style.display = 'none';
-            closeTurretMenu();
+            // Add transition effects
+            startMenu.classList.add('menu-fade-enter');
+            gameContainer.classList.add('menu-fade-enter');
             
-            // Stop game loop if it's running
-            if (gameLoopId) {
-                cancelAnimationFrame(gameLoopId);
-                gameLoopId = null;
-            }
-            
-            // Refresh menu data
-            updateMenuUI();
-            switchMenuTab('levels'); // Default to levels tab
+            setTimeout(() => {
+                // Hide game, show menu
+                gameContainer.style.display = 'none';
+                startMenu.style.display = 'none';
+                messageBox.style.display = 'none';
+                
+                mainMenu.style.display = 'flex';
+                mainMenu.classList.remove('menu-fade-enter');
+                mainMenu.classList.add('menu-fade-enter-active');
+                closeTurretMenu();
+                
+                // Stop game loop if it's running
+                if (gameLoopId) {
+                    cancelAnimationFrame(gameLoopId);
+                    gameLoopId = null;
+                }
+                
+                // Refresh menu data
+                updateMenuUI();
+                switchMenuTab('levels'); // Default to levels tab
+            }, 150);
         }
         
         function updateMenuUI() {
             if (!playerData) return;
             
-            gemDisplay.textContent = playerData.gems || 0;
+            if (gemDisplay) gemDisplay.textContent = playerData.gems || 0;
             if (gemDisplayStart) gemDisplayStart.textContent = playerData.gems || 0;
+            if (gemDisplayMenu) gemDisplayMenu.textContent = playerData.gems || 0;
             
-            // --- Populate Level Select with horizontal cards ---
+            // --- Populate Level Select with enhanced cards (responsive) ---
             levelSelectContainer.innerHTML = ''; // Clear old list
-            levels.forEach((level, index) => {
-                const levelCard = document.createElement('div');
-                levelCard.className = 'level-card bg-gray-800 p-6 rounded-xl shadow-2xl mx-4 flex flex-col justify-between';
-                
-                const difficultyColor = level.difficulty === 'Easy' ? 'text-green-400' : 
-                                       level.difficulty === 'Medium' ? 'text-yellow-400' : 
-                                       level.difficulty === 'Hard' ? 'text-orange-400' :
-                                       level.difficulty === 'Very Hard' ? 'text-red-400' : 'text-purple-400';
-                
-                levelCard.innerHTML = `
-                    <div>
-                        <h3 class="text-2xl font-bold text-white mb-2">Level ${index + 1}</h3>
-                        <p class="text-lg mb-3">
-                            <span class="font-semibold ${difficultyColor}">${level.difficulty}</span>
-                        </p>
-                        <div class="space-y-2 text-sm text-gray-300">
-                            <p>Waves: <span class="font-semibold text-blue-300">${level.waves.length}</span></p>
-                            <p>Starting Money: <span class="font-semibold text-green-300">$${level.startingMoney}</span></p>
-                            <p>Starting Lives: <span class="font-semibold text-red-300">${level.startingLives}</span></p>
-                            <p>Reward: <span class="font-semibold text-purple-300">${level.gemReward} Gems</span></p>
+            let currentPage = 0;
+
+            function getGridConfig() {
+                const w = window.innerWidth;
+                const h = window.innerHeight;
+                const landscape = w > h;
+                let cols = 3, rows = 2, gap = 6, heightVh = 72;
+                if (!landscape) {
+                    cols = 2; rows = 2; gap = 4; heightVh = 78;
+                } else if (w < 700) {
+                    cols = 2; rows = 2; gap = 4; heightVh = 76;
+                } else if (w < 900) {
+                    cols = 2; rows = 3; gap = 5; heightVh = 74;
+                } else if (w < 1200) {
+                    cols = 3; rows = 2; gap = 5; heightVh = 72;
+                } else {
+                    cols = 3; rows = 2; gap = 6; heightVh = 72;
+                }
+                return { cols, rows, gap, heightVh };
+            }
+
+            const paginationBar = document.getElementById('level-pagination');
+            function updateNavButtons(totalPagesLocal) {
+                levelNavLeft.style.display = currentPage > 0 ? 'flex' : 'none';
+                levelNavRight.style.display = currentPage < (totalPagesLocal - 1) ? 'flex' : 'none';
+            }
+
+            function renderPage(page) {
+                const cfg = getGridConfig();
+                const levelsPerPage = cfg.cols * cfg.rows;
+                const totalPagesLocal = Math.ceil(levels.length / levelsPerPage);
+                currentPage = Math.max(0, Math.min(totalPagesLocal - 1, page));
+
+                // Update container grid and height
+                levelSelectContainer.style.height = `${cfg.heightVh}vh`;
+                levelSelectContainer.className = `grid grid-cols-${cfg.cols} grid-rows-${cfg.rows} gap-${cfg.gap} place-items-stretch items-stretch w-full h-full border-4 border-purple-500`;
+                levelSelectContainer.innerHTML = '';
+
+                const start = currentPage * levelsPerPage;
+                const end = Math.min(levels.length, start + levelsPerPage);
+
+                for (let i = start; i < end; i++) {
+                    const levelData = levels[i];
+                    const levelCard = document.createElement('div');
+                    const titleSize = 'typography-title';
+                    const iconSize = 'icon-lg';
+                    const metricSize = 'typography-metric';
+                    const descSize = 'typography-desc';
+                    const padCard = 'card-pad';
+                    const btnPad = (cfg.rows >= 3 || cfg.cols === 2) ? 'py-3 px-4' : 'py-4 px-6';
+                    levelCard.className = `level-card bg-gradient-to-br from-gray-700 via-gray-600 to-gray-700 ${padCard} rounded-xl border border-gray-500 hover:border-yellow-400 transition-all duration-300 hover:shadow-lg hover:shadow-yellow-500/30 cursor-pointer backdrop-blur-sm border-2 border-blue-500 w-full h-auto flex flex-col justify-between`;
+
+                    const isUnlocked = i === 0 || playerData.completedLevels.includes(i - 1);
+                    const isCompleted = playerData.completedLevels.includes(i);
+
+                    let buttonText = 'Play Level';
+                    let buttonClass = 'bg-gradient-to-r from-blue-600 via-blue-500 to-blue-600 hover:from-blue-700 hover:via-blue-600 hover:to-blue-700 text-white';
+                    let buttonDisabled = false;
+                    let statusIcon = '🎮';
+
+                    if (isCompleted) {
+                        buttonText = 'Replay Level';
+                        buttonClass = 'bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 text-white';
+                        statusIcon = '🏆';
+                    } else if (!isUnlocked) {
+                        buttonText = '🔒 Locked';
+                        buttonClass = 'bg-gradient-to-r from-red-900 via-red-800 to-red-900 text-red-300 cursor-not-allowed';
+                        buttonDisabled = true;
+                        statusIcon = '🔒';
+                    }
+
+                    const difficultyColor = {
+                        'Easy': 'text-green-400',
+                        'Medium': 'text-yellow-400', 
+                        'Hard': 'text-orange-400',
+                        'Very Hard': 'text-red-400',
+                        'Expert': 'text-purple-400',
+                        'Insane': 'text-pink-400'
+                    }[levelData.difficulty] || 'text-gray-400';
+
+                    levelCard.innerHTML = `
+                        <div class="flex-1 flex flex-col space-y-3">
+                            <div class="flex items-center justify-between">
+                                <h3 class="typography-title font-bold text-yellow-300">Level ${i + 1}</h3>
+                                ${isCompleted ? '<span class="level-status-icon typography-desc text-green-300">🏆</span>' : '<span class="level-status-icon typography-desc text-gray-400">🎮</span>'}
+                            </div>
+
+                        <div class="level-card-metrics grid grid-cols-2 gap-4">
+                            <div class="text-center bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 ${padCard} rounded-lg border border-gray-600 hover:border-yellow-500 transition-all duration-200">
+                                <p class="text-gray-400 text-sm mb-2 flex items-center justify-center">
+                                    <span class="mr-1">🌊</span>Waves
+                                </p>
+                                <p class="text-yellow-300 font-bold ${metricSize}">${levelData.waves.length}</p>
+                            </div>
+                            <div class="text-center bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 ${padCard} rounded-lg border border-gray-600 hover:border-purple-500 transition-all duration-200">
+                                <p class="text-gray-400 text-sm mb-2 flex items-center justify-center">
+                                    <span class="mr-1">💎</span>Reward
+                                </p>
+                                <p class="text-purple-300 font-bold ${metricSize}">${levelData.gemReward} Gems</p>
+                            </div>
                         </div>
-                    </div>
-                    <button class="mt-4 game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg w-full">
-                        Play Level
-                    </button>
-                `;
-                
-                levelCard.querySelector('button').onclick = () => startGame(index);
-                levelSelectContainer.appendChild(levelCard);
-            });
+                        </div>
+
+                        <div class="mt-3 pt-3 border-t border-gray-600">
+                            <button type="button" class="typography-button font-bold ${btnPad} rounded-xl w-full text-center transition-all duration-200 ${buttonClass} shadow-lg hover:shadow-xl btn-min relative z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 active:scale-95 active:ring-2 active:ring-yellow-400" ${buttonDisabled ? 'disabled' : ''} aria-label="${buttonText} - Level ${i + 1}">
+                                ${buttonText}
+                            </button>
+                        </div>
+                    `;
+
+                    if (!buttonDisabled) {
+                        levelCard.querySelector('button').onclick = () => startGame(i);
+                    }
+
+                    levelSelectContainer.appendChild(levelCard);
+
+                    // Apply compact/ultra-compact based on available slot size
+                    const containerRect = levelSelectContainer.getBoundingClientRect();
+                    const slotHeight = containerRect.height / cfg.rows;
+                    const slotWidth = containerRect.width / cfg.cols;
+                    if (slotWidth < 320 || slotHeight < 230) {
+                        levelCard.classList.add('level-card-compact');
+                    }
+                    const cardHeight = levelCard.scrollHeight;
+                    if (cardHeight > (slotHeight - 12)) {
+                        levelCard.classList.add('level-card-ultra');
+                    } else {
+                        levelCard.classList.remove('level-card-ultra');
+                    }
+                }
+
+                // Bottom pagination
+                if (paginationBar) {
+                    paginationBar.innerHTML = `
+                        <button id="pager-prev" class="bg-gray-800 hover:bg-gray-700 text-white font-bold px-4 py-2 rounded btn-min typography-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 active:scale-95" aria-label="Previous page">Prev</button>
+                        <span class="text-gray-300">Page ${currentPage + 1} of ${totalPagesLocal}</span>
+                        <button id="pager-next" class="bg-gray-800 hover:bg-gray-700 text-white font-bold px-4 py-2 rounded btn-min typography-button focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 active:scale-95" aria-label="Next page">Next</button>
+                    `;
+                    const prevBtn = document.getElementById('pager-prev');
+                    const nextBtn = document.getElementById('pager-next');
+                    prevBtn.onclick = () => scrollLevels(-1);
+                    nextBtn.onclick = () => scrollLevels(1);
+                    prevBtn.disabled = currentPage === 0;
+                    nextBtn.disabled = currentPage >= totalPagesLocal - 1;
+                    prevBtn.classList.toggle('opacity-50', prevBtn.disabled);
+                    nextBtn.classList.toggle('opacity-50', nextBtn.disabled);
+                }
+
+                updateNavButtons(totalPagesLocal);
+            }
+
+            renderPage(0);
+
+            scrollLevels = (direction) => {
+                renderPage(currentPage + direction);
+            };
+
+            // Keep responsive on resize
+            window.addEventListener('resize', () => renderPage(currentPage));
             
-            // --- Populate Armory with upgrade comparisons ---
+            window.addEventListener('keydown', (event) => {
+                if (event.key === 'ArrowLeft') {
+                    scrollLevels(-1);
+                } else if (event.key === 'ArrowRight') {
+                    scrollLevels(1);
+                }
+            });
+                        // --- Populate Armory with upgrade comparisons ---
+            armoryContainer = document.getElementById('armory-container');
             armoryContainer.innerHTML = ''; // Clear old list
             Object.entries(turretTypes).forEach(([id, stats]) => {
                 const currentMaxLevel = playerData.turretMaxLevels[id] || 0;
                 const baseStats = getTurretStats(id, 1);
-                const maxStats = getTurretStats(id, currentMaxLevel || 1);
+                const currentStats = getTurretStats(id, currentMaxLevel || 1);
                 const nextLevelStats = currentMaxLevel > 0 && currentMaxLevel < 4 ? getTurretStats(id, currentMaxLevel + 1) : null;
                 
                 const turretCard = document.createElement('div');
-                turretCard.className = 'bg-gray-800 p-6 rounded-xl shadow-2xl';
+                turretCard.className = 'bg-gradient-to-r from-gray-700 via-gray-600 to-gray-700 card-pad rounded-xl border border-gray-500 hover:border-blue-400 transition-all duration-300 hover:shadow-lg hover:shadow-blue-500/30 cursor-pointer backdrop-blur-sm relative';
+                turretCard.setAttribute('role','group');
+                turretCard.setAttribute('tabindex','0');
                 
                 let upgradePreview = '';
-                if (nextLevelStats && currentMaxLevel > 0) {
-                    const dmgDiff = nextLevelStats.damage - maxStats.damage;
-                    const rangeDiff = nextLevelStats.range - maxStats.range;
-                    const rateDiff = nextLevelStats.fireRate - maxStats.fireRate;
-                    upgradePreview = `
-                        <div class="mt-4 p-3 bg-gray-700 rounded-lg border border-purple-500">
-                            <p class="text-xs text-purple-300 font-semibold mb-2">Next Level Preview:</p>
-                            <div class="text-xs space-y-1">
-                                ${dmgDiff > 0 ? `<p>Damage: <span class="text-green-400">+${dmgDiff}</span></p>` : ''}
-                                ${rangeDiff > 0 ? `<p>Range: <span class="text-blue-400">+${rangeDiff}</span></p>` : ''}
-                                ${rateDiff < 0 ? `<p>Fire Rate: <span class="text-yellow-400">${rateDiff} (faster)</span></p>` : rateDiff > 0 ? `<p>Fire Rate: <span class="text-red-400">+${rateDiff} (slower)</span></p>` : ''}
+                let upgradeButton = '';
+                
+                if (currentMaxLevel < 4) {
+                    if (playerData.gems >= stats.gemUpgradeCost[currentMaxLevel - 1] || (currentMaxLevel === 0 && playerData.gems >= stats.gemUnlockCost)) {
+                        const cost = currentMaxLevel === 0 ? stats.gemUnlockCost : stats.gemUpgradeCost[currentMaxLevel - 1];
+                        const action = currentMaxLevel === 0 ? 'Unlock' : `Upgrade to Level ${currentMaxLevel + 1}`;
+                        upgradeButton = `
+                            <button onclick="${currentMaxLevel === 0 ? `unlockTurret('${id}', ${cost})` : `upgradeMaxTurretLevel('${id}', ${cost})`}" class="w-full mt-4 bg-gradient-to-r from-green-600 via-green-500 to-green-600 hover:from-green-700 hover:via-green-600 hover:to-green-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-200 hover:scale-105 shadow-lg hover:shadow-green-500/50 btn-min typography-button relative z-10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-400 active:scale-95" aria-label="${currentMaxLevel === 0 ? `Unlock ${stats.name}` : `Upgrade ${stats.name}`}">
+                                ${action} (${cost} 💎)
+                            </button>
+                        `;
+                    } else {
+                        const cost = currentMaxLevel === 0 ? stats.gemUnlockCost : stats.gemUpgradeCost[currentMaxLevel - 1];
+                        upgradeButton = `
+                            <div class="w-full mt-4 bg-gradient-to-r from-gray-800 to-gray-700 text-gray-400 font-bold py-3 px-4 rounded-lg border border-gray-600 text-center cursor-not-allowed btn-min typography-button">
+                                Need ${cost} 💎
                             </div>
+                        `;
+                    }
+                    
+                    if (nextLevelStats) {
+                        const damageIncrease = nextLevelStats.damage - currentStats.damage;
+                        const rangeIncrease = nextLevelStats.range - currentStats.range;
+                        const fireRateImprovement = currentStats.fireRate - nextLevelStats.fireRate;
+
+                        upgradePreview = `
+                            <div class="mt-3 border-t border-green-600 pt-2">
+                                <div class="flex items-center justify-between text-xs">
+                                    <div class="flex items-center">
+                                        <span class="mr-2">⚔️</span>
+                                        <span class="text-red-300 typography-desc font-semibold">+${damageIncrease.toFixed(1)}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="mr-2">🎯</span>
+                                        <span class="text-blue-300 typography-desc font-semibold">+${rangeIncrease.toFixed(0)}</span>
+                                    </div>
+                                    <div class="flex items-center">
+                                        <span class="mr-2">⚡</span>
+                                        <span class="text-purple-300 typography-desc font-semibold">${fireRateImprovement > 0 ? '+' : ''}${fireRateImprovement.toFixed(1)}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                } else {
+                    upgradeButton = `
+                        <div class="w-full mt-4 bg-gradient-to-r from-yellow-900 via-yellow-800 to-yellow-900 text-yellow-300 font-bold py-3 px-4 rounded-lg border border-yellow-600 text-center shadow-lg backdrop-blur-sm typography-button">
+                            <span class="flex items-center justify-center">
+                                <span class="mr-2">⭐</span>MAX LEVEL⭐
+                                <span class="ml-2">⭐</span>
+                            </span>
                         </div>
                     `;
                 }
                 
                 turretCard.innerHTML = `
-                    <div>
-                        <h3 class="text-2xl font-bold mb-2" style="color:${stats.color}">${stats.name}</h3>
-                        <p class="text-sm text-gray-400 mb-4">${stats.description}</p>
-                        
-                        <div class="grid grid-cols-2 gap-4 mb-4">
-                            <div class="bg-gray-700 p-3 rounded-lg">
-                                <p class="text-xs text-gray-400 mb-1">Level 1 Stats</p>
-                                <p class="text-sm">Cost: <span class="font-bold text-green-300">$${baseStats.cost}</span></p>
-                                <p class="text-sm">DMG: <span class="font-bold text-red-300">${baseStats.damage}</span></p>
-                                <p class="text-sm">Range: <span class="font-bold text-blue-300">${baseStats.range}</span></p>
-                                <p class="text-sm">Rate: <span class="font-bold text-yellow-300">${baseStats.fireRate}</span></p>
-                            </div>
-                            <div class="bg-gray-700 p-3 rounded-lg">
-                                <p class="text-xs text-gray-400 mb-1">Max Level ${currentMaxLevel || 'Locked'} Stats</p>
-                                ${currentMaxLevel > 0 ? `
-                                    <p class="text-sm">DMG: <span class="font-bold text-red-300">${maxStats.damage}</span></p>
-                                    <p class="text-sm">Range: <span class="font-bold text-blue-300">${maxStats.range}</span></p>
-                                    <p class="text-sm">Rate: <span class="font-bold text-yellow-300">${maxStats.fireRate}</span></p>
-                                ` : '<p class="text-sm text-gray-500">Locked</p>'}
+                    <div class="flex items-center justify-between section-margin">
+                        <div class="flex items-center space-x-3">
+                            <div class="icon-md drop-shadow-lg" style="color:${stats.color}">🎯</div>
+                            <div>
+                                <h3 class="typography-title font-bold text-white drop-shadow-md">${stats.name}</h3>
+                                <p class="text-gray-300 typography-desc truncate max-w-[16rem]">${stats.description}</p>
                             </div>
                         </div>
-                        
-                        ${upgradePreview}
-                        
-                        <p class="text-sm text-gray-400 mt-3">
-                            Current Max Level: <span class="font-bold text-yellow-400">${currentMaxLevel}</span>
-                        </p>
+                        <div class="text-right">
+                            <span class="inline-flex items-center px-2 py-1 rounded-lg border border-gray-600 bg-gray-800 text-yellow-300 typography-desc">Lvl ${currentMaxLevel || 0}/4</span>
+                        </div>
                     </div>
+
+                    <div class="bg-gradient-to-b from-gray-800 via-gray-700 to-gray-800 card-pad rounded-lg border border-gray-600 section-margin">
+                        <ul class="text-gray-300 text-xs leading-snug space-y-1">
+                            <li class="flex items-center justify-between">
+                                <span class="flex items-center"><span class="mr-1">💰</span>Cost</span>
+                                <span class="text-green-300 font-semibold">$${currentStats.cost}</span>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <span class="flex items-center"><span class="mr-1">⚔️</span>Damage</span>
+                                <span class="text-red-300 font-semibold">${currentStats.damage}</span>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <span class="flex items-center"><span class="mr-1">🎯</span>Range</span>
+                                <span class="text-blue-300 font-semibold">${currentStats.range}</span>
+                            </li>
+                            <li class="flex items-center justify-between">
+                                <span class="flex items-center"><span class="mr-1">⚡</span>Fire</span>
+                                <span class="text-purple-300 font-semibold">${currentStats.fireRate}</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    ${upgradePreview}
+                    ${upgradeButton}
                 `;
                 
-                const unlockButton = document.createElement('button');
-                unlockButton.className = 'game-button text-white font-bold py-3 px-6 rounded-lg w-full mt-4 text-center';
-                
-                if (currentMaxLevel === 0) {
-                    unlockButton.textContent = `Unlock (${stats.gemUnlockCost} Gems)`;
-                    if (playerData.gems >= stats.gemUnlockCost) {
-                        unlockButton.className += ' bg-purple-600 hover:bg-purple-700';
-                        unlockButton.onclick = () => unlockTurret(id, stats.gemUnlockCost);
-                    } else {
-                        unlockButton.className += ' bg-red-700 cursor-not-allowed';
-                        unlockButton.disabled = true;
-                    }
-                } else {
-                    const nextUpgradeCost = stats.gemUpgradeCost[currentMaxLevel - 1];
-                    if (nextUpgradeCost !== undefined) {
-                        unlockButton.textContent = `Upgrade Max to Lvl ${currentMaxLevel + 1} (${nextUpgradeCost} Gems)`;
-                        if (playerData.gems >= nextUpgradeCost) {
-                            unlockButton.className += ' bg-purple-600 hover:bg-purple-700';
-                            unlockButton.onclick = () => upgradeMaxTurretLevel(id, nextUpgradeCost);
-                        } else {
-                            unlockButton.className += ' bg-red-700 cursor-not-allowed';
-                            unlockButton.disabled = true;
-                        }
-                    } else {
-                        unlockButton.textContent = 'Maxed Out';
-                        unlockButton.className += ' bg-gray-600 cursor-not-allowed';
-                        unlockButton.disabled = true;
-                    }
-                }
-                
-                turretCard.appendChild(unlockButton);
                 armoryContainer.appendChild(turretCard);
             });
         }
         
         function unlockTurret(turretId, cost) {
-            if (playerData.gems >= cost && (playerData.turretMaxLevels[turretId] || 0) === 0) {
-                playerData.gems -= cost;
-                playerData.turretMaxLevels[turretId] = 1; // Set max level to 1
+            const current = playerData.turretMaxLevels[turretId] || 0;
+            const unlockCost = (turretTypes[turretId] && turretTypes[turretId].gemUnlockCost != null)
+                ? turretTypes[turretId].gemUnlockCost
+                : cost;
+            if (current === 0 && playerData.gems >= unlockCost) {
+                playerData.gems -= unlockCost;
+                playerData.turretMaxLevels[turretId] = 1; // Unlock at level 1
                 updateMenuUI();
+                saveProgress();
             }
         }
         
         function upgradeMaxTurretLevel(turretId, cost) {
-            if (playerData.gems >= cost && (playerData.turretMaxLevels[turretId] || 0) > 0) {
-                playerData.gems -= cost;
-                playerData.turretMaxLevels[turretId]++;
+            const current = playerData.turretMaxLevels[turretId] || 0;
+            if (current <= 0 || current >= 4) return; // Must be unlocked and below max
+            const upgradeCosts = turretTypes[turretId]?.gemUpgradeCost || [];
+            const required = upgradeCosts[current - 1] != null ? upgradeCosts[current - 1] : cost;
+            if (playerData.gems >= required) {
+                playerData.gems -= required;
+                playerData.turretMaxLevels[turretId] = Math.min(current + 1, 4);
                 updateMenuUI();
+                saveProgress();
             }
         }
+
+        // Expose functions globally because script uses type="module"
+        window.unlockTurret = unlockTurret;
+        window.upgradeMaxTurretLevel = upgradeMaxTurretLevel;
         
         // === DEBUG MENU FUNCTIONS ===
         
@@ -609,6 +1025,7 @@
             if (gameContainer.style.display !== 'none') {
                 setupTurretButtons(); // Update turret buttons in-game
             }
+            saveProgress();
         }
         
         function maxAllTurretLevels() {
@@ -617,34 +1034,70 @@
                 playerData.turretMaxLevels[id] = 4;
             });
             updateMenuUI();
+            saveProgress();
         }
         
         // === CORE GAME LOGIC ===
 
         function startGame(levelIndex) {
-            // Hide menu, show game
-            mainMenu.style.display = 'none';
-            gameContainer.style.display = 'block';
+            // Add transition effects
+            mainMenu.classList.add('menu-fade-enter');
             
-            // Resize canvas *after* it's visible
-            resizeCanvas();
-            
-            loadLevel(levelIndex);
-            
-            // Start game loop
-            gameLoopId = requestAnimationFrame(gameLoop);
+            setTimeout(() => {
+                // Hide menu, show game
+                mainMenu.style.display = 'none';
+                gameContainer.style.display = 'block';
+                gameContainer.classList.remove('menu-fade-enter');
+                gameContainer.classList.add('menu-fade-enter-active');
+                
+                // Resize canvas *after* it's visible
+                resizeCanvas();
+                
+                loadLevel(levelIndex);
+                
+                // Start game loop
+                gameLoopId = requestAnimationFrame(gameLoop);
+            }, 150);
         }
 
-        // Function to resize canvas to fit its container
+        // Function to resize canvas to fit its container while maintaining aspect ratio
         function resizeCanvas() {
             const container = canvas.parentElement; 
             const rect = container.getBoundingClientRect();
-
-            canvas.width = 800;
-            canvas.height = 600;
-
-            canvas.style.width = `${rect.width}px`;
-            canvas.style.height = `${rect.height}px`;
+            
+            // Set internal canvas resolution (native resolution)
+            const nativeWidth = 800;
+            const nativeHeight = 600;
+            const aspectRatio = nativeWidth / nativeHeight;
+            
+            // Use full available space, no padding
+            let displayWidth = rect.width;
+            let displayHeight = rect.height;
+            
+            // If container is wider than needed for aspect ratio, limit width
+            if (displayWidth / displayHeight > aspectRatio) {
+                displayWidth = displayHeight * aspectRatio;
+            } else {
+                // Otherwise, limit height
+                displayHeight = displayWidth / aspectRatio;
+            }
+            
+            // Center the canvas in the container
+            const offsetX = (rect.width - displayWidth) / 2;
+            const offsetY = (rect.height - displayHeight) / 2;
+            
+            // Set canvas internal resolution
+            canvas.width = nativeWidth;
+            canvas.height = nativeHeight;
+            
+            // Set display size maintaining aspect ratio - fill as much as possible
+            canvas.style.width = `${displayWidth}px`;
+            canvas.style.height = `${displayHeight}px`;
+            canvas.style.position = 'absolute';
+            canvas.style.left = `${offsetX}px`;
+            canvas.style.top = `${offsetY}px`;
+            canvas.style.maxWidth = '100%';
+            canvas.style.maxHeight = '100%';
             
             canvasWidth = canvas.width;
             canvasHeight = canvas.height;
@@ -661,6 +1114,7 @@
             armoryContainer = document.getElementById('armory-container');
             gemDisplay = document.getElementById('gem-display');
             gemDisplayStart = document.getElementById('gem-display-start');
+            gemDisplayMenu = document.getElementById('gem-display-menu');
             
             // New menu elements
             navLevels = document.getElementById('nav-levels');
@@ -671,6 +1125,16 @@
             levelNavRight = document.getElementById('level-nav-right');
             backToStartBtn = document.getElementById('back-to-start-btn');
             startPlayBtn = document.getElementById('start-play-btn');
+            // Settings elements
+            const settingsBtn = document.getElementById('settings-btn');
+            const settingsModal = document.getElementById('settings-modal');
+            const settingsClose = document.getElementById('settings-close');
+            const settingsSaveClose = document.getElementById('settings-save-close');
+            const settingsSlots = document.getElementById('settings-slots');
+            const settingsClearSlot = document.getElementById('settings-clear-slot');
+            const settingsAudio = document.getElementById('settings-audio');
+            const settingsMusic = document.getElementById('settings-music');
+            // Armory elements removed - armory is now permanently visible in sidebar
 
             canvas = document.getElementById('game-canvas');
             ctx = canvas.getContext('2d');
@@ -679,6 +1143,9 @@
             levelDisplay = document.getElementById('level-display');
             waveDisplay = document.getElementById('wave-display');
             startWaveBtn = document.getElementById('start-wave-btn');
+            speedDownBtn = document.getElementById('speed-down-btn');
+            speedUpBtn = document.getElementById('speed-up-btn');
+            speedDisplay = document.getElementById('speed-display');
             towerSelectionUI = document.getElementById('tower-selection-ui');
             backToMenuBtn = document.getElementById('back-to-menu-btn');
 
@@ -687,14 +1154,74 @@
             messageText = document.getElementById('message-text');
             messageButton1 = document.getElementById('message-button-1');
             messageButton2 = document.getElementById('message-button-2');
-            
+
+            // Settings modal helpers
+            function renderSettingsSlots() {
+                settingsSlots.innerHTML = '';
+                const active = getActiveSlot();
+                for (let i = 1; i <= 4; i++) {
+                    const data = loadFromSlot(i);
+                    const gems = data?.gems ?? '—';
+                    const completed = Array.isArray(data?.completedLevels) ? data.completedLevels.length : 0;
+                    const isActive = i === active;
+                    const row = document.createElement('div');
+                    row.className = `flex items-center justify-between p-2 rounded-lg border ${isActive ? 'border-purple-500 bg-purple-900 bg-opacity-20' : 'border-gray-700 bg-gray-800 bg-opacity-50'}`;
+                    row.innerHTML = `
+                        <label class="flex items-center space-x-2">
+                            <input type="radio" name="save-slot" value="${i}" ${isActive ? 'checked' : ''} />
+                            <span>Slot ${i}</span>
+                        </label>
+                        <div class="text-sm text-gray-300">Gems: <span class="font-bold">${gems}</span> • Levels: ${completed}</div>
+                    `;
+                    settingsSlots.appendChild(row);
+                }
+                // Set preferences
+                settingsAudio.checked = !!playerData.settings?.audioEnabled;
+                settingsMusic.checked = !!playerData.settings?.musicEnabled;
+            }
+
+            function openSettings() {
+                renderSettingsSlots();
+                settingsModal.classList.remove('hidden');
+            }
+            function closeSettings() {
+                settingsModal.classList.add('hidden');
+            }
+
+            // Settings events
+            if (settingsBtn) settingsBtn.addEventListener('click', openSettings);
+            if (settingsClose) settingsClose.addEventListener('click', closeSettings);
+            if (settingsSaveClose) settingsSaveClose.addEventListener('click', closeSettings);
+            if (settingsClearSlot) settingsClearSlot.addEventListener('click', () => {
+                const selected = document.querySelector('input[name="save-slot"]:checked');
+                const slot = selected ? parseInt(selected.value, 10) : getActiveSlot();
+                clearSaveSlot(slot, turretTypes);
+                renderSettingsSlots();
+            });
+            settingsSlots.addEventListener('change', (e) => {
+                if (e.target && e.target.name === 'save-slot') {
+                    const slot = parseInt(e.target.value, 10);
+                    switchSaveSlot(slot, turretTypes);
+                    renderSettingsSlots();
+                }
+            });
+            if (settingsAudio) settingsAudio.addEventListener('change', (e) => {
+                playerData.settings = playerData.settings || {};
+                playerData.settings.audioEnabled = !!e.target.checked;
+                saveProgress();
+            });
+            if (settingsMusic) settingsMusic.addEventListener('change', (e) => {
+                playerData.settings = playerData.settings || {};
+                playerData.settings.musicEnabled = !!e.target.checked;
+                saveProgress();
+            });
             // --- Assign new turret menu elements ---
             turretMenu = document.getElementById('turret-menu');
             turretMenuTitle = document.getElementById('turret-menu-title');
             turretMenuStats = document.getElementById('turret-menu-stats');
             turretMenuUpgrade = document.getElementById('turret-menu-upgrade');
             turretMenuSell = document.getElementById('turret-menu-sell');
-            turretMenuClose = document.getElementById('turret-menu-close');
+            // turretMenuClose removed - no close button needed
             turretMenuUpgradePreview = document.getElementById('turret-menu-upgrade-preview');
             // --- End of element assignment ---
 
@@ -703,17 +1230,38 @@
             canvas.addEventListener('click', onMouseClick);
             startWaveBtn.addEventListener('click', startWave);
             backToMenuBtn.addEventListener('click', showStartMenu);
+
+            // Speed control listeners
+            function clampSpeed(val) { return Math.max(1, Math.min(8, val)); }
+            function updateSpeedUI() {
+                if (speedDisplay) speedDisplay.textContent = `${gameSpeed}x`;
+                if (speedDownBtn) speedDownBtn.disabled = gameSpeed <= 1;
+                if (speedUpBtn) speedUpBtn.disabled = gameSpeed >= 8;
+            }
+            if (speedDownBtn) {
+                speedDownBtn.addEventListener('click', () => {
+                    gameSpeed = clampSpeed(gameSpeed - 1);
+                    updateSpeedUI();
+                });
+            }
+            if (speedUpBtn) {
+                speedUpBtn.addEventListener('click', () => {
+                    gameSpeed = clampSpeed(gameSpeed + 1);
+                    updateSpeedUI();
+                });
+            }
+            updateSpeedUI();
             
             // Menu navigation
             startPlayBtn.addEventListener('click', showMainMenu);
             backToStartBtn.addEventListener('click', showStartMenu);
-            navLevels.addEventListener('click', () => switchMenuTab('levels'));
-            navArmory.addEventListener('click', () => switchMenuTab('armory'));
             levelNavLeft.addEventListener('click', () => scrollLevels(-1));
             levelNavRight.addEventListener('click', () => scrollLevels(1));
+            
+            // Armory toggle removed - armory is now permanently visible
 
             // --- Turret Menu Listeners ---
-            turretMenuClose.addEventListener('click', closeTurretMenu);
+            // turretMenuClose removed - menu closes when clicking elsewhere
             turretMenuUpgrade.addEventListener('click', upgradeSelectedTurret);
             turretMenuSell.addEventListener('click', sellSelectedTurret);
             
@@ -728,7 +1276,7 @@
             
             // --- Debug Menu Listeners ---
             debugClose.addEventListener('click', toggleDebugMenu);
-            debugAddGems.addEventListener('click', () => { playerData.gems += 100; updateMenuUI(); });
+            debugAddGems.addEventListener('click', () => { playerData.gems += 100; updateMenuUI(); saveProgress(); });
             debugAddMoney.addEventListener('click', () => { money += 1000; updateInGameUI(); });
             debugUnlockAll.addEventListener('click', unlockAllTurrets);
             debugMaxAll.addEventListener('click', maxAllTurretLevels);
@@ -765,16 +1313,11 @@
                 return;
             }
             
-            // Set default data and start
-            const turretMaxLevels = {};
-            Object.keys(turretTypes).forEach(id => {
-                turretMaxLevels[id] = id === 'basic' ? 1 : 0;
-            });
-            
-            playerData = {
-                gems: 10,
-                turretMaxLevels: turretMaxLevels
-            };
+            // Initialize save system and load active slot (fallback to defaults)
+            const activeSlot = getActiveSlot();
+            const loaded = loadFromSlot(activeSlot);
+            playerData = mergeDataWithDefaults(loaded, turretTypes);
+            saveProgress();
             
             updateMenuUI();
             loadingOverlay.style.display = 'none';
@@ -782,47 +1325,94 @@
         }
         
         function showStartMenu() {
-            startMenu.style.display = 'flex';
-            mainMenu.style.display = 'none';
-            gameContainer.style.display = 'none';
-            messageBox.style.display = 'none';
-            closeTurretMenu();
+            // Add transition effects
+            mainMenu.classList.add('menu-fade-enter');
+            gameContainer.classList.add('menu-fade-enter');
             
-            if (gameLoopId) {
-                cancelAnimationFrame(gameLoopId);
-                gameLoopId = null;
-            }
-            
-            if (playerData) {
-                gemDisplayStart.textContent = playerData.gems || 0;
-            }
+            setTimeout(() => {
+                mainMenu.style.display = 'none';
+                gameContainer.style.display = 'none';
+                messageBox.style.display = 'none';
+                
+                startMenu.style.display = 'flex';
+                startMenu.classList.remove('menu-fade-enter');
+                startMenu.classList.add('menu-fade-enter-active');
+                
+                closeTurretMenu();
+                
+                if (gameLoopId) {
+                    cancelAnimationFrame(gameLoopId);
+                    gameLoopId = null;
+                }
+                
+                if (playerData && gemDisplayStart) {
+                    gemDisplayStart.textContent = playerData.gems || 0;
+                }
+            }, 150);
         }
         
-        function switchMenuTab(tab) {
-            if (tab === 'levels') {
-                levelSelectView.classList.remove('hidden');
-                armoryView.classList.add('hidden');
-                navLevels.classList.remove('bg-gray-700');
-                navLevels.classList.add('bg-blue-600', 'text-white');
-                navArmory.classList.remove('bg-blue-600', 'text-white');
-                navArmory.classList.add('bg-gray-700', 'text-gray-300');
-            } else {
-                levelSelectView.classList.add('hidden');
-                armoryView.classList.remove('hidden');
-                navArmory.classList.remove('bg-gray-700');
-                navArmory.classList.add('bg-blue-600', 'text-white');
-                navLevels.classList.remove('bg-blue-600', 'text-white');
-                navLevels.classList.add('bg-gray-700', 'text-gray-300');
-            }
-        }
+
         
         function scrollLevels(direction) {
             const container = levelSelectContainer;
-            const scrollAmount = 400;
-            container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+            if (!container) return;
+            const cards = Array.from(container.children);
+            if (cards.length === 0) return;
+
+            const containerRect = container.getBoundingClientRect();
+            const containerCenter = container.scrollLeft + containerRect.width / 2;
+
+            // Find the card whose center is closest to the container center
+            let currentIndex = 0;
+            let minDist = Infinity;
+            for (let i = 0; i < cards.length; i++) {
+                const card = cards[i];
+                const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+                const dist = Math.abs(cardCenter - containerCenter);
+                if (dist < minDist) {
+                    minDist = dist;
+                    currentIndex = i;
+                }
+
+                // Re-render page on resize to re-evaluate compactness
+                if (!window.__levelSelectResizeBound) {
+                    window.addEventListener('resize', () => renderPage(currentPage));
+                    window.__levelSelectResizeBound = true;
+                }
+            }
+
+            const targetIndex = Math.min(cards.length - 1, Math.max(0, currentIndex + direction));
+            const target = cards[targetIndex];
+            const paddingLeft = parseFloat(getComputedStyle(container).paddingLeft) || 0;
+            const targetLeft = target.offsetLeft - paddingLeft;
+            container.scrollTo({ left: targetLeft, behavior: 'smooth' });
         }
 
         // Load a level's data
+        function setLevelTheme(levelIndex) {
+            const level = levels[levelIndex];
+            if (!level) return;
+            
+            // Set level-specific theme based on level index or name
+            let theme = 'default';
+            if (levelIndex === 0 || (level.name && level.name.toLowerCase().includes('forest'))) {
+                theme = 'forest';
+            } else if (levelIndex === 1 || (level.name && level.name.toLowerCase().includes('desert'))) {
+                theme = 'desert';
+            } else if (levelIndex === 2 || (level.name && level.name.toLowerCase().includes('snow'))) {
+                theme = 'snow';
+            } else if (levelIndex === 3 || (level.name && level.name.toLowerCase().includes('volcan'))) {
+                theme = 'volcanic';
+            }
+            
+            level.pathStyle = theme;
+            
+            // Apply theme to game container
+            const gameContainer = document.getElementById('game-container');
+            gameContainer.className = gameContainer.className.replace(/theme-\w+/g, '');
+            gameContainer.classList.add(`theme-${theme}`);
+        }
+        
         function loadLevel(levelIndex) {
             currentLevel = levelIndex;
             currentWave = 0;
@@ -831,6 +1421,15 @@
             money = levelData.startingMoney;
             lives = levelData.startingLives;
             currentPath = levelData.path;
+
+            // Reset per-level stats
+            enemiesDefeated = 0;
+            moneyEarned = 0;
+            turretsPlaced = 0;
+            elapsedTimeMs = 0;
+            
+            // Set level theme
+            setLevelTheme(levelIndex);
             
             turrets = [];
             enemies = [];
@@ -853,22 +1452,35 @@
         function setupTurretButtons() {
             towerSelectionUI.innerHTML = ''; // Clear old buttons
             
+            // Create a container for turret cards similar to level cards
+            const turretCardsContainer = document.createElement('div');
+            turretCardsContainer.className = 'flex space-x-4 overflow-x-auto pb-2 scrollbar-themed';
+            
             getUnlockedTurrets().forEach(turretId => {
                 const stats = getTurretStats(turretId, 1); // Get Lvl 1 stats
                 if (!stats) return;
                 
-                const button = document.createElement('button');
-                button.id = `buy-${turretId}`;
-                button.className = 'tower-button game-button bg-gray-800 p-3 rounded-lg border-2 border-gray-600 hover:border-blue-500';
-                button.innerHTML = `
-                    <div class="font-bold text-lg">${stats.name}</div>
-                    <div class="text-sm text-gray-400">Cost: <span class="text-green-400">$${stats.cost}</span></div>
-                    <div class="text-sm text-gray-400">${turretTypes[turretId].description}</div>
-                `;
-                button.onclick = () => selectTower(turretId);
+                const turretCard = document.createElement('div');
+                turretCard.className = 'tower-button bg-gray-800 hover:bg-gray-700 rounded-xl p-4 min-w-[120px] flex flex-col items-center justify-between cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-xl border-2 border-gray-600 hover:border-blue-500';
+                turretCard.id = `buy-${turretId}`;
                 
-                towerSelectionUI.appendChild(button);
+                turretCard.innerHTML = `
+                    <div class="text-center mb-3">
+                        <div class="text-2xl mb-1" style="color:${turretTypes[turretId].color}">🎯</div>
+                        <h3 class="text-sm font-bold text-white">${stats.name}</h3>
+                    </div>
+                    <div class="text-center text-xs text-gray-300 space-y-1">
+                        <p>Cost: <span class="font-bold text-green-300">$${stats.cost}</span></p>
+                        <p>DMG: <span class="font-bold text-red-300">${stats.damage}</span></p>
+                        <p>RNG: <span class="font-bold text-blue-300">${stats.range}</span></p>
+                    </div>
+                `;
+                
+                turretCard.onclick = () => selectTower(turretId);
+                turretCardsContainer.appendChild(turretCard);
             });
+            
+            towerSelectionUI.appendChild(turretCardsContainer);
         }
         
         // Start the next wave
@@ -908,18 +1520,25 @@
                 return;
             }
 
+            // Apply gameplay speed (clamped 1x–8x) and track elapsed time
+            const speed = Math.max(1, Math.min(8, gameSpeed));
+            const adjustedDelta = deltaTime * speed;
+            if (gameState === 'playing' || gameState === 'waiting') {
+                elapsedTimeMs += adjustedDelta * 16.67;
+            }
+
             ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
             drawPath();
             
             if (gameState === 'playing') {
-                handleSpawning(deltaTime);
-                updateEnemies(deltaTime);
+                handleSpawning(adjustedDelta);
+                updateEnemies(adjustedDelta);
             }
             
-            updateTurrets(deltaTime);
-            updateProjectiles(deltaTime);
-            updateParticles(deltaTime);
+            updateTurrets(adjustedDelta);
+            updateProjectiles(adjustedDelta);
+            updateParticles(adjustedDelta);
 
             drawTurrets();
             drawEnemies();
@@ -938,8 +1557,9 @@
 
         function handleSpawning(deltaTime) {
             if (spawnQueue.length > 0) {
-                spawnCounter++; // This is a frame-based counter
-                while(spawnQueue.length > 0 && spawnCounter >= spawnQueue[0].time) {
+                // Use deltaTime (normalized frames) so gameSpeed affects spawn spacing
+                spawnCounter += deltaTime;
+                while (spawnQueue.length > 0 && spawnCounter >= spawnQueue[0].time) {
                     const enemyData = spawnQueue.shift();
                     spawnEnemy(enemyData.type);
                 }
@@ -968,6 +1588,8 @@
                     // Create death particles
                     createDeathParticles(enemy.x, enemy.y, enemy.color, enemy.radius);
                     money += enemy.reward;
+                    moneyEarned += enemy.reward;
+                    enemiesDefeated++;
                     updateInGameUI();
                     enemies.splice(i, 1);
                     continue;
@@ -1098,7 +1720,22 @@
         
         function drawPath() {
             if (!currentPath || currentPath.length === 0) return;
-            ctx.strokeStyle = '#1f2937'; // gray-900
+            
+            // Get level-specific path styling
+            const levelData = levels[currentLevel];
+            const pathStyle = levelData.pathStyle || 'default';
+            const pathColors = {
+                forest: { primary: '#8B4513', secondary: '#A0522D', border: '#654321' },
+                desert: { primary: '#D2691E', secondary: '#DEB887', border: '#CD853F' },
+                snow: { primary: '#B0C4DE', secondary: '#E6E6FA', border: '#708090' },
+                volcanic: { primary: '#8B0000', secondary: '#DC143C', border: '#4B0000' },
+                default: { primary: '#9ca3af', secondary: '#6b7280', border: '#1f2937' }
+            };
+            
+            const colors = pathColors[pathStyle] || pathColors.default;
+            
+            // Draw path border (shadow effect)
+            ctx.strokeStyle = colors.border;
             ctx.lineWidth = pathWidth + 4; 
             ctx.lineCap = 'round'; ctx.lineJoin = 'round';
             ctx.beginPath();
@@ -1106,12 +1743,42 @@
             for (let i = 1; i < currentPath.length; i++) ctx.lineTo(currentPath[i].x, currentPath[i].y);
             ctx.stroke();
             
-            ctx.strokeStyle = '#9ca3af'; // gray-400
+            // Draw main path with texture pattern
+            ctx.strokeStyle = colors.primary;
             ctx.lineWidth = pathWidth;
+            
+            // Add texture pattern for different path types
+            if (pathStyle === 'forest') {
+                // Forest path - darker, earthier tones
+                ctx.setLineDash([5, 3]);
+            } else if (pathStyle === 'desert') {
+                // Desert path - sandy texture
+                ctx.setLineDash([2, 2]);
+            } else if (pathStyle === 'snow') {
+                // Snow path - icy appearance
+                ctx.setLineDash([8, 4]);
+            } else if (pathStyle === 'volcanic') {
+                // Volcanic path - lava cracks
+                ctx.setLineDash([1, 1]);
+            }
+            
             ctx.beginPath();
             ctx.moveTo(currentPath[0].x, currentPath[0].y);
             for (let i = 1; i < currentPath.length; i++) ctx.lineTo(currentPath[i].x, currentPath[i].y);
             ctx.stroke();
+            
+            // Reset line dash
+            ctx.setLineDash([]);
+            
+            // Add secondary path highlight
+            ctx.strokeStyle = colors.secondary;
+            ctx.lineWidth = pathWidth * 0.3;
+            ctx.globalAlpha = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(currentPath[0].x, currentPath[0].y);
+            for (let i = 1; i < currentPath.length; i++) ctx.lineTo(currentPath[i].x, currentPath[i].y);
+            ctx.stroke();
+            ctx.globalAlpha = 1.0;
         }
 
         function drawEnemies() {
@@ -1346,6 +2013,7 @@
                 if (isPlacementValid(mouse.x, mouse.y, stats.cost)) {
                     money -= stats.cost;
                     turrets.push({ x: mouse.x, y: mouse.y, type: selectedTowerType, level: 1, cooldown: 0, angle: 0 });
+                    turretsPlaced++;
                     updateInGameUI();
                     selectTower(null); // Deselect build mode
                 } else {
@@ -1541,6 +2209,10 @@
             livesDisplay.textContent = lives;
             levelDisplay.textContent = currentLevel + 1;
             waveDisplay.textContent = currentWave + (gameState === 'playing' ? 1 : 0);
+            // Keep speed indicator fresh during UI updates
+            if (typeof gameSpeed !== 'undefined' && speedDisplay) {
+                speedDisplay.textContent = `${gameSpeed}x`;
+            }
         }
         
         function endWave() {
@@ -1587,12 +2259,30 @@
             closeTurretMenu();
             const reward = levels[currentLevel].gemReward || 0;
             playerData.gems += reward;
-            
-            // Update menu UI in background so gem count is correct when player returns
-            updateMenuUI(); 
+            // Mark level as completed and unlock the next one in menu
+            if (!playerData.completedLevels.includes(currentLevel)) {
+                playerData.completedLevels.push(currentLevel);
+            }
+            // Update menu UI and persist progress
+            updateMenuUI();
+            saveProgress();
 
             messageTitle.textContent = 'Level Complete!';
             messageText.textContent = `You beat level ${currentLevel + 1}! You earned ${reward} gems.`;
+
+            // Populate stats in the overlay
+            const setText = (id, value) => {
+                const el = document.getElementById(id);
+                if (el) el.textContent = value;
+            };
+            const totalWaves = levels[currentLevel]?.waves?.length || currentWave;
+            const timeSec = Math.round(elapsedTimeMs / 1000);
+            setText('stat-waves', `${totalWaves}`);
+            setText('stat-enemies', `${enemiesDefeated}`);
+            setText('stat-money', `$${moneyEarned}`);
+            setText('stat-lives', `${lives}`);
+            setText('stat-turrets', `${turretsPlaced}`);
+            setText('stat-time', `${timeSec}s`);
             
             messageButton1.textContent = 'Next Level';
             const nextLevel = currentLevel + 1;
@@ -1620,87 +2310,168 @@
 
     </script>
 </head>
-<body class="bg-gray-900 text-gray-200 h-screen flex items-center justify-center p-4">
+<body class="bg-gray-900 text-gray-200 h-screen flex items-center justify-center">
 
     <!-- Loading Overlay -->
     <div id="loading-overlay" class="fixed inset-0 bg-gray-900 text-white flex items-center justify-center z-50">
         <div class="text-2xl font-bold">Loading Game...</div>
     </div>
 
-    <!-- Start Menu -->
-    <div id="start-menu" class="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col items-center justify-center z-40">
-        <div class="text-center mb-8">
-            <h1 class="text-6xl font-bold text-white mb-4 drop-shadow-2xl" style="text-shadow: 0 0 20px rgba(147, 51, 234, 0.8);">TOWER DEFENSE</h1>
-            <div class="text-xl text-gray-300 mb-8">Defend your base from waves of enemies</div>
+    <!-- Enhanced Start Menu -->
+    <div id="start-menu" class="fixed inset-0 bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900 flex flex-col items-center justify-center z-40 menu-transition">
+        <!-- Settings button (top-right) -->
+        <button id="settings-btn" class="absolute top-4 right-4 bg-gray-800 hover:bg-gray-700 text-white rounded-full p-3 shadow-lg border border-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500" aria-label="Settings" title="Settings">
+            ⚙️
+        </button>
+        <div class="text-center mb-8 animate-pulse">
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-2xl" style="text-shadow: 0 0 20px rgba(147, 51, 234, 0.8);">TOWER DEFENSE</h1>
+            <div class="text-lg md:text-xl text-gray-300 mb-8">Defend your base from waves of enemies</div>
             <div class="text-lg font-semibold bg-purple-900 bg-opacity-50 px-6 py-3 rounded-lg inline-block mb-8">
                 Gems: <span id="gem-display-start" class="text-purple-300 font-bold">0</span>
             </div>
         </div>
-        <button id="start-play-btn" class="game-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-2xl py-4 px-12 rounded-xl shadow-2xl transform transition-all duration-200 hover:scale-105">
+        <button id="start-play-btn" class="game-button bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white font-bold text-xl md:text-2xl py-3 md:py-4 px-8 md:px-12 rounded-xl shadow-2xl transform transition-all duration-200 hover:scale-105 active:scale-95">
             PLAY
         </button>
     </div>
 
-    <!-- Main Menu (Level Select & Armory) -->
-    <div id="main-menu" class="hidden fixed inset-0 bg-gray-900 z-30">
-        <!-- Top Bar -->
-        <div class="bg-gray-800 border-b border-gray-700 p-4 flex justify-between items-center">
-            <h1 class="text-2xl font-bold text-white">Tower Defense</h1>
-            <div class="flex items-center space-x-4">
-                <div class="text-lg font-semibold bg-gray-700 px-4 py-2 rounded-lg">
-                    Gems: <span id="gem-display" class="text-purple-400 font-bold">0</span>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 bg-black bg-opacity-70 z-50">
+        <div class="w-full h-full flex items-center justify-center">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[92vw] max-w-[900px] p-6 flex flex-col">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-2xl font-bold text-white">Settings</h2>
+                    <button id="settings-close" class="text-gray-300 hover:text-white text-xl">&times;</button>
                 </div>
-                <button id="back-to-start-btn" class="game-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg">Back</button>
-            </div>
-        </div>
-        
-        <!-- Navigation Tabs -->
-        <div class="bg-gray-800 border-b border-gray-700 flex">
-            <button id="nav-levels" class="flex-1 py-4 px-6 text-lg font-semibold bg-blue-600 text-white">Levels</button>
-            <button id="nav-armory" class="flex-1 py-4 px-6 text-lg font-semibold bg-gray-700 hover:bg-gray-600 text-gray-300">Armory</button>
-        </div>
-        
-        <!-- Level Select View -->
-        <div id="level-select-view" class="flex-1 overflow-hidden relative">
-            <button id="level-nav-left" class="absolute left-4 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white text-4xl font-bold w-16 h-16 rounded-full flex items-center justify-center shadow-lg">‹</button>
-            <div id="level-select-container" class="flex overflow-x-auto scrollbar-hide snap-x snap-mandatory h-full items-center px-20">
-                <!-- Level cards will be injected here -->
-            </div>
-            <button id="level-nav-right" class="absolute right-4 top-1/2 -translate-y-1/2 z-10 bg-gray-800 hover:bg-gray-700 text-white text-4xl font-bold w-16 h-16 rounded-full flex items-center justify-center shadow-lg">›</button>
-        </div>
-        
-        <!-- Armory View -->
-        <div id="armory-view" class="hidden flex-1 overflow-y-auto p-6">
-            <div id="armory-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Turret cards will be injected here -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-y-auto scrollbar-themed">
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
+                        <h3 class="text-lg font-bold text-white mb-2">Save Slots</h3>
+                        <div id="settings-slots" class="space-y-2"></div>
+                        <div class="mt-3 flex space-x-2">
+                            <button id="settings-clear-slot" class="game-button bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-3 rounded-lg">Clear Selected Slot</button>
+                        </div>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
+                        <h3 class="text-lg font-bold text-white mb-2">Preferences</h3>
+                        <label class="flex items-center space-x-2 mb-2">
+                            <input type="checkbox" id="settings-audio" class="form-checkbox">
+                            <span>Enable Sound Effects</span>
+                        </label>
+                        <label class="flex items-center space-x-2">
+                            <input type="checkbox" id="settings-music" class="form-checkbox">
+                            <span>Enable Music</span>
+                        </label>
+                    </div>
+                    <div class="md:col-span-2 bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
+                        <h3 class="text-lg font-bold text-white mb-2">Credits</h3>
+                        <p class="text-gray-300 text-sm">Design & Code: You</p>
+                        <p class="text-gray-300 text-sm">Art & UI: Tailwind-inspired components</p>
+                        <p class="text-gray-300 text-sm">Special Thanks: Playtesters</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-4">
+                    <button id="settings-save-close" class="game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg">Close</button>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Game Container -->
-    <div id="game-container" class="hidden fixed inset-0 bg-gray-900 flex flex-col">
-        <!-- Top Game UI Bar -->
-        <div class="bg-gray-800 p-3 flex justify-between items-center flex-shrink-0">
-            <div class="flex space-x-4 text-sm md:text-base">
-                <div>Money: <span id="money-display" class="font-bold text-green-400">0</span></div>
-                <div>Base HP: <span id="lives-display" class="font-bold text-red-400">0</span></div>
+    <!-- Armory Section (removed - now permanently in main menu sidebar) -->
+
+    <!-- Main Menu (Level Select & Armory) -->
+    <div id="main-menu" class="hidden fixed inset-0 bg-gray-900 z-30 menu-transition">
+        <!-- Compact overlay: Back button (top-left), Gems & Level (top-right) -->
+        <button id="back-to-start-btn" class="absolute top-4 left-4 z-30 bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg flex items-center space-x-2">
+            <span>←</span>
+            <span>Back</span>
+        </button>
+        <div id="menu-info-overlay" class="absolute top-4 right-4 z-30 flex items-center space-x-4">
+            <div class="flex items-center space-x-2 bg-purple-900 bg-opacity-60 px-3 py-2 rounded-lg border border-purple-600">
+                <span class="text-purple-300">💎</span>
+                <span id="gem-display-menu" class="text-purple-300 font-bold">0</span>
             </div>
-            <div class="flex space-x-4 text-center text-sm md:text-base">
-                <div>Level: <span id="level-display" class="font-bold text-blue-300">1</span></div>
-                <div>Wave: <span id="wave-display" class="font-bold text-yellow-300">0</span></div>
+            <div class="flex items-center space-x-2 bg-blue-900 bg-opacity-60 px-3 py-2 rounded-lg border border-blue-600">
+                <span id="menu-level-display" class="text-blue-300 font-bold">Level 1</span>
+            </div>
+        </div>
+        
+        <!-- Main content area with armory on left (~22% width) and level select on right (~78% width) -->
+        <div class="flex h-full">
+            <!-- Permanent Armory Sidebar (~22% width) -->
+            <div class="w-[22%] bg-gray-800 border-r border-gray-700 flex flex-col">
+                <div class="p-6 border-b border-gray-700 bg-gradient-to-b from-gray-800 to-gray-700">
+                    <h2 class="text-2xl font-bold text-white mb-2">Armory</h2>
+                    <p class="text-gray-400 text-sm">Upgrade Your Arsenal</p>
+                </div>
+                <div id="armory-container" class="flex-1 min-h-0 p-4 overflow-y-auto space-y-3 scrollbar-themed">
+                    <!-- Turret cards will be injected here as vertical list -->
+                </div>
+            </div>
+            
+            <!-- Level Select Area (80% width) -->
+            <div class="relative bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
+                <!-- Level Select Header -->
+                <div class="bg-gray-800 p-6 border-b border-gray-700 bg-gradient-to-r from-gray-800 to-gray-700">
+                    <h2 class="text-3xl font-bold text-white mb-2">Choose Your Battlefield</h2>
+                    <p class="text-gray-400">Select a level to defend</p>
+                </div>
+                
+                <!-- Level Select Content Wrapper -->
+                <div class="flex items-start px-[3vw]">
+                    <div id="level-select-container" class="grid grid-cols-3 grid-rows-2 gap-6 place-items-stretch items-stretch w-full h-full border-4 border-purple-500 relative">
+                        <!-- Level cards will be injected here -->
+                    </div>
+                </div>
+                <!-- Bottom pager bar -->
+                <div id="level-pagination" class="mt-3 w-full flex items-center justify-center gap-4"></div>
+                <button id="level-nav-left" aria-label="Previous page" class="absolute left-0 top-1/2 -translate-y-1/2 z-50 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 active:scale-95" style="width:clamp(48px,6vw,84px);height:clamp(48px,6vw,84px);font-size:clamp(24px,4vw,48px);">‹</button>
+                <button id="level-nav-right" aria-label="Next page" class="absolute top-1/2 -translate-y-1/2 z-50 bg-gray-800 hover:bg-gray-700 text-white font-bold rounded-full flex items-center justify-center shadow-2xl transition-all duration-200 hover:scale-110 hover:shadow-purple-500/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-400 active:scale-95" style="width:clamp(48px,6vw,84px);height:clamp(48px,6vw,84px);font-size:clamp(24px,4vw,48px); right: 5vw;">›</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Game Container -->
+    <div id="game-container" class="hidden fixed inset-0 bg-gray-900 flex flex-col menu-transition w-full h-full">
+        <!-- Optimized Top Game UI Bar -->
+        <div class="bg-gray-800 p-2 md:p-3 flex justify-between items-center flex-shrink-0 shadow-lg">
+            <div class="flex space-x-3 md:space-x-6 text-sm md:text-base">
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-400">💰</span>
+                    <span>Money: <span id="money-display" class="font-bold text-green-400">0</span></span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-400">❤️</span>
+                    <span>Base HP: <span id="lives-display" class="font-bold text-red-400">0</span></span>
+                </div>
+            </div>
+            <div class="flex space-x-3 md:space-x-6 text-center text-sm md:text-base">
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-400">🎯</span>
+                    <span>Level: <span id="level-display" class="font-bold text-blue-300">1</span></span>
+                </div>
+                <div class="flex items-center space-x-1">
+                    <span class="text-gray-400">🌊</span>
+                    <span>Wave: <span id="wave-display" class="font-bold text-yellow-300">0</span></span>
+                </div>
             </div>
             <div class="flex space-x-2">
-                <button id="start-wave-btn" class="game-button bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 text-sm rounded-lg">Start Wave</button>
-                <button id="back-to-menu-btn" class="game-button bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 text-sm rounded-lg">Menu</button>
+                <button id="start-wave-btn" class="game-button bg-green-600 hover:bg-green-700 text-white font-bold py-1 px-3 text-sm rounded-lg transition-all duration-200 hover:scale-105">Start Wave</button>
+                <!-- Gameplay Speed Controls -->
+                <div class="flex items-center space-x-2">
+                    <button id="speed-down-btn" aria-label="Decrease speed" class="game-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-1 px-2 text-sm rounded-lg transition-all duration-200">−</button>
+                    <span class="text-gray-300 text-sm">Speed: <span id="speed-display" class="font-bold text-yellow-300">1x</span></span>
+                    <button id="speed-up-btn" aria-label="Increase speed" class="game-button bg-gray-700 hover:bg-gray-600 text-white font-bold py-1 px-2 text-sm rounded-lg transition-all duration-200">＋</button>
+                </div>
+                <button id="back-to-menu-btn" class="game-button bg-red-600 hover:bg-red-700 text-white font-bold py-1 px-3 text-sm rounded-lg transition-all duration-200 hover:scale-105">Menu</button>
             </div>
         </div>
 
-        <!-- Canvas Container (Handles Aspect Ratio AND Turret Menu) -->
-        <div id="game-canvas-container" class="bg-gray-700 flex-1 flex items-center justify-center min-h-0">
-            <canvas id="game-canvas"></canvas>
+        <!-- Larger Game Area -->
+        <div class="flex-1 relative bg-gray-700 w-full h-full">
+            <canvas id="game-canvas" class="shadow-2xl w-full h-full"></canvas>
 
-            <!-- Enhanced Turret Upgrade Menu -->
-            <div id="turret-menu" class="hidden absolute bg-gray-800 rounded-lg shadow-xl p-4 w-72 text-gray-300 border-2 border-blue-500 z-20">
+            <!-- Enhanced Turret Upgrade Menu (permanent, no close button) -->
+            <div id="turret-menu" class="hidden absolute bg-gray-800 rounded-lg shadow-xl p-4 w-72 text-gray-300 border-2 border-blue-500 z-20 menu-transition">
                 <h3 id="turret-menu-title" class="text-xl font-bold mb-2 text-white">Turret</h3>
                 <div id="turret-menu-stats" class="text-sm space-y-1 mb-3">
                     <!-- Stats injected here -->
@@ -1709,27 +2480,58 @@
                     <!-- Upgrade preview injected here -->
                 </div>
                 <div class="flex space-x-2">
-                    <button id="turret-menu-upgrade" class="flex-1 game-button bg-green-600 hover:bg-green-700">Upgrade</button>
-                    <button id="turret-menu-sell" class="flex-1 game-button bg-red-600 hover:bg-red-700">Sell</button>
+                    <button id="turret-menu-upgrade" class="flex-1 game-button bg-green-600 hover:bg-green-700 transition-all duration-200">Upgrade</button>
+                    <button id="turret-menu-sell" class="flex-1 game-button bg-red-600 hover:bg-red-700 transition-all duration-200">Sell</button>
                 </div>
-                <button id="turret-menu-close" class="absolute -top-3 -right-3 text-gray-200 bg-red-600 hover:bg-red-700 w-7 h-7 rounded-full font-bold text-lg flex items-center justify-center border-2 border-white">&times;</button>
             </div>
         </div>
 
-        <!-- Bottom Tower Selection Bar -->
-        <div id="tower-selection-ui" class="bg-gray-800 p-2 flex space-x-2 justify-center overflow-x-auto flex-shrink-0">
+        <!-- Permanent Tower Selection Bar (no close button, always visible) -->
+        <div id="tower-selection-ui" class="bg-gray-800 p-2 md:p-3 flex space-x-2 justify-start overflow-x-auto flex-shrink-0 shadow-lg border-t-2 border-gray-600">
             <!-- Tower buttons will be injected here -->
         </div>
     </div>
 
     <!-- Message Box (Game Over / Win) -->
-    <div id="message-box" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-40">
-        <div class="bg-gray-800 p-8 rounded-lg shadow-2xl text-center w-full max-w-md">
-            <h2 id="message-title" class="text-3xl font-bold mb-4">Game Over!</h2>
-            <p id="message-text" class="text-lg mb-6">You lost.</p>
-            <div class="flex justify-center space-x-4">
-                <button id="message-button-1" class="game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg">Restart</button>
-                <button id="message-button-2" class="game-button bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-6 rounded-lg">Main Menu</button>
+    <div id="message-box" class="hidden fixed inset-0 bg-black bg-opacity-70 z-40">
+        <div class="w-full h-full flex items-center justify-center">
+            <div class="bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 border border-gray-700 rounded-2xl shadow-2xl w-[92vw] h-[88vh] p-8 flex flex-col">
+                <div class="flex items-center justify-between mb-6">
+                    <h2 id="message-title" class="text-4xl font-extrabold text-white">Level Complete!</h2>
+                    <div class="text-right">
+                        <p id="message-text" class="text-lg text-gray-300">You beat the level.</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-6 flex-1">
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Waves Cleared</p>
+                        <p id="stat-waves" class="text-3xl font-bold text-yellow-300">0</p>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Enemies Defeated</p>
+                        <p id="stat-enemies" class="text-3xl font-bold text-red-300">0</p>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Gems Earned</p>
+                        <p id="stat-money" class="text-3xl font-bold text-purple-300">$0</p>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Lives Left</p>
+                        <p id="stat-lives" class="text-3xl font-bold text-green-300">0</p>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Turrets Placed</p>
+                        <p id="stat-turrets" class="text-3xl font-bold text-blue-300">0</p>
+                    </div>
+                    <div class="bg-gray-800 bg-opacity-70 rounded-xl p-6 border border-gray-700">
+                        <p class="text-gray-400">Time</p>
+                        <p id="stat-time" class="text-3xl font-bold text-white">0s</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-4 mt-6">
+                    <button id="message-button-1" class="game-button bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg">Next Level</button>
+                    <button id="message-button-2" class="game-button bg-gray-600 hover:bg-gray-700 text-white font-bold py-3 px-6 rounded-lg">Main Menu</button>
+                </div>
             </div>
         </div>
     </div>
