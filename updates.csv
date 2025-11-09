@@ -1,3 +1,7 @@
-version,log_entry
-V1.0.1,Separated debug menu into local-only script.
-V1.0.0,The first full release of the game.
+version,log_entry,style
+V1.1,Version 1.1,title
+- V1.1.0,Placeholder for next update.,bullet
+V1.0,Version 1.0,title
+- V1.0.0,The first full release of the game.,bullet
+- V1.0.1,Seperated Debug Menu into Local-Only Script,bullet
+- V1.0.2,Ballenced Gameplay,bullet

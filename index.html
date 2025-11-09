@@ -598,7 +598,12 @@
                         levels[levelIndex].waves[waveIndex] = { enemies: [] };
                     }
                     
-                    const enemyGroups = parseEnemies(row.enemies);
+                    const enemyGroups = [{
+                        type: row.enemy_type,
+                        count: parseInt(row.count) || 0,
+                        spawnRate: parseInt(row.spawn_delay) || 60,
+                        delay: parseInt(row.initial_delay) || 0
+                    }];
                     levels[levelIndex].waves[waveIndex].enemies = enemyGroups;
                 });
 
@@ -1114,12 +1119,14 @@
                 const response = await fetch('updates.csv');
                 const csvText = await response.text();
                 updateLogs = csvText.split('\n').slice(1).filter(row => row.trim() !== '').map(row => {
-                    const [version, log_entry] = row.split(',');
-                    return { version, log_entry };
+                    const [version, log_entry, style] = row.split(',');
+                    return { version, log_entry, style };
                 });
             } catch (error) {
                 console.error('Failed to load update logs:', error);
             }
+
+            renderUpdateLogs(); // Render update logs immediately after loading
 
             // Armory elements removed - armory is now permanently visible in sidebar
 
@@ -1171,10 +1178,33 @@
                 const updateLogList = document.getElementById('update-log-list');
                 if (updateLogList) {
                     updateLogList.innerHTML = ''; // Clear existing logs
+
+                    let currentMajorVersion = '';
+                    let currentUl = null;
+
                     updateLogs.forEach(log => {
-                        const listItem = document.createElement('li');
-                        listItem.textContent = log.log_entry;
-                        updateLogList.appendChild(listItem);
+                        if (log.style === 'title') {
+                            const majorVersionHeading = document.createElement('h3');
+                            majorVersionHeading.style.fontWeight = 'bold';
+                            majorVersionHeading.style.color = 'white';
+                            majorVersionHeading.style.fontSize = '1.2em';
+                            majorVersionHeading.textContent = `${log.log_entry}`;
+                            updateLogList.appendChild(majorVersionHeading);
+                            currentUl = null; // Reset currentUl for new major version
+                        } else if (log.style === 'bullet') {
+                            if (!currentUl) {
+                                currentUl = document.createElement('ul');
+                                updateLogList.appendChild(currentUl);
+                            }
+                            const listItem = document.createElement('li');
+                            listItem.style.color = '#CCCCCC'; // Lighter grey
+                            listItem.style.fontWeight = 'normal'; // Ensure it's not bold by default
+                            if (log.version.includes('.1')) {
+                                listItem.style.fontWeight = 'bold';
+                            }
+                            listItem.textContent = `${log.version}: ${log.log_entry}`;
+                            currentUl.appendChild(listItem);
+                        }
                     });
                 }
             }
@@ -2365,7 +2395,7 @@
                     <div class="bg-gray-800 bg-opacity-70 rounded-xl p-4 border border-gray-700">
                         <h3 class="text-xl font-semibold text-purple-300 mb-3">Updates & Version</h3>
                         <div class="bg-gray-700 p-3 rounded-lg text-sm">
-                            <p class="text-white font-bold mb-2">Version: V1.0.0</p>
+
                             <ul id="update-log-list" class="list-disc list-inside text-gray-300 space-y-1">
                                 <!-- Update logs will be loaded here from updates.csv -->
                             </ul>
