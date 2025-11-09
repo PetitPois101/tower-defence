@@ -1,0 +1,5 @@
+# Local-only debug script (do not commit)
+debug-local.js
+
+# macOS metadata
+.DS_Store

@@ -25,3 +25,18 @@ This is a classic tower defence game where players strategically place towers to
 - Leaderboards and achievements.
 
 Enjoy defending your territory!
+
+## Local Debug Menu (Development Only)
+
+- The debug menu is available only in local development via a separate script `debug-local.js`.
+- This file is excluded from version control by `.gitignore`, ensuring no debug code ships to production.
+- The game’s main module conditionally loads the debug script if it exists; otherwise, no debug UI or logic is included.
+
+### Enabling Locally
+- Keep `debug-local.js` in the project root (same folder as `index.html`).
+- Start a local server (e.g., `python3 -m http.server 8000`) and open `http://localhost:8000/index.html`.
+- Press `D` to toggle the debug menu in the browser.
+
+### Verification
+- Run `git status` to confirm `debug-local.js` is ignored and not staged.
+- Remove or rename `debug-local.js` to simulate a production build; the debug UI will not load.
