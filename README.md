@@ -26,6 +26,10 @@ This is a classic tower defence game where players strategically place towers to
 
 Enjoy defending your territory!
 
+## Play the Game
+
+You can play the game live here: https://petitpois101.github.io/tower-defence/
+
 ## Local Debug Menu (Development Only)
 
 - The debug menu is available only in local development via a separate script `debug-local.js`.
